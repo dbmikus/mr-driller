@@ -1,6 +1,7 @@
 // Global variables
 
-//colors used for blocks
+//colors used for blocks.
+// Everything in this array can be drilled.
 var colors= ["red","blue","green","purple"];
 
 
@@ -52,16 +53,44 @@ function Driller(column,row) {
     this.column = column;
     this.row = row;
 
+    // Possibilities: left, right, up, down
+    this.drillDirection = "down";
+
     // Receives input to move around digger
     // Also does object collision detection
+    // Pretty sure this will only be called with dx or dy non-zero. Not both
     this.move = function (dx, dy) {
+        // Checks for object collision for moving
         if(this.column+dx>=0 && this.column+dx<blockcolumns
-            && this.row+dy>0 && this.row+dy < blocks[this.column].length 
+            && this.row+dy>0 && this.row+dy < blocks[this.column].length
             && blocks[this.column+dx][this.row+dy].type==="empty"){
             this.column += dx;
             this.row += dy;
         }
-        console.log(this.column+","+this.row);
+
+        if (dx < 0) this.drillDirection = "left";
+        else if (dx > 0) this.drillDirection = "right";
+        else if (dy > 0) this.drillDirection = "down";
+        else if (dy < 0) this.drillDirection = "up";
+    }
+
+    this.drill = function () {
+        var pos;
+        if (this.drillDirection === "left")
+            pos = [this.column - 1, this.row];
+        else if (this.drillDirection === "right")
+            pos = [this.column + 1, this.row];
+        else if (this.drillDirection === "up")
+            pos = [this.column, this.row + 1];
+        else if (this.drillDirection === "down")
+            pos = [this.column, this.row - 1];
+
+        var toDrill = blocks[pos[0], pos[1]];
+        // Checks if the thing we are drilling is a drillable block.
+        // Everything in colors can be drilled.
+        if (colors.indexOf(toDrill.type) > -1) {
+            blocks[pos[0], pos[1]] = new Block("empty");
+        }
     }
 }
 
@@ -99,11 +128,19 @@ function onKeyDown(event) {
 
     if (keycode === leftarrow) dx--
     else if (keycode === rightarrow) dx++;
-    else if (keycode === uparrow) dy++;
     else if (keycode === downarrow) dy--;
+    else if (keycode === uparrow) dy++;
 
-    driller.move(dx, dy);
-    console.log(driller);
+    // Shouldn't be able to move up or down by keypresses.
+
+    if (dx !== 0 || dy !== 0) {
+        driller.move(dx, dy); // TODO: this is probably messed up
+    }
+
+    // Drilling stuff
+    if (keycode === spacebar) {
+        driller.drill();
+    }
 }
 
 function setUpWorld(){
@@ -144,9 +181,38 @@ function drawBlocks(){
 }
 
 function drawDriller(){
+    // Draws Mr. Driller body
     ctx.beginPath();
     ctx.fillStyle = "white";
-    ctx.arc(driller.column*60+30, canvas.height -driller.row*60+30, 29, 0, 2*Math.PI, true);
+    ctx.arc(driller.column*60+30, canvas.height - driller.row*60+30, 29, 0, 2*Math.PI, true);
+    ctx.fill();
+
+    // Draw Mr. Driller's drill
+    ctx.beginPath();
+    ctx.fillStyle = "brown";
+
+    var drillOffset = 15;
+    if (driller.drillDirection === "down") {
+        ctx.arc(driller.column*60+30,
+                canvas.height - driller.row*60+30 - drillOffset,
+                10, 0, 2*Math.PI, true);
+    }
+    else if (driller.drillDirection === "up") {
+        ctx.arc(driller.column*60+30,
+                canvas.height - driller.row*60+30 + drillOffset,
+                10, 0, 2*Math.PI, true);
+    }
+    else if (driller.drillDirection === "left") {
+        ctx.arc(driller.column*60+30 - drillOffset,
+                canvas.height - driller.row*60+30,
+                10, 0, 2*Math.PI, true);
+    }
+    else if (driller.drillDirection === "right") {
+        ctx.arc(driller.column*60+30 + drillOffset,
+                canvas.height - driller.row*60+30,
+                10, 0, 2*Math.PI, true);
+    }
+
     ctx.fill();
 }
 
