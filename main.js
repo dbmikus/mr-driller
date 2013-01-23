@@ -70,12 +70,13 @@ function Driller(column,row) {
 
         if (dx < 0) this.drillDirection = "left";
         else if (dx > 0) this.drillDirection = "right";
-        else if (dy > 0) this.drillDirection = "down";
-        else if (dy < 0) this.drillDirection = "up";
+        else if (dy < 0) this.drillDirection = "down";
+        else if (dy > 0) this.drillDirection = "up";
     }
 
     this.drill = function () {
         var pos;
+
         if (this.drillDirection === "left")
             pos = [this.column - 1, this.row];
         else if (this.drillDirection === "right")
@@ -85,11 +86,13 @@ function Driller(column,row) {
         else if (this.drillDirection === "down")
             pos = [this.column, this.row - 1];
 
-        var toDrill = blocks[pos[0], pos[1]];
+
+        var toDrill = blocks[pos[0]][pos[1]];
         // Checks if the thing we are drilling is a drillable block.
         // Everything in colors can be drilled.
+
         if (colors.indexOf(toDrill.type) > -1) {
-            blocks[pos[0], pos[1]] = new Block("empty");
+            blocks[pos[0]][pos[1]] = new Block("empty");
         }
     }
 }
@@ -194,12 +197,12 @@ function drawDriller(){
     var drillOffset = 15;
     if (driller.drillDirection === "down") {
         ctx.arc(driller.column*60+30,
-                canvas.height - driller.row*60+30 - drillOffset,
+                canvas.height - driller.row*60+30 + drillOffset,
                 10, 0, 2*Math.PI, true);
     }
     else if (driller.drillDirection === "up") {
         ctx.arc(driller.column*60+30,
-                canvas.height - driller.row*60+30 + drillOffset,
+                canvas.height - driller.row*60+30 - drillOffset,
                 10, 0, 2*Math.PI, true);
     }
     else if (driller.drillDirection === "left") {
