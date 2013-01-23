@@ -55,8 +55,13 @@ function Driller(column,row) {
     // Receives input to move around digger
     // Also does object collision detection
     this.move = function (dx, dy) {
-        this.column += dx;
-        this.row += dy;
+        if(this.column+dx>=0 && this.column+dx<blockcolumns
+            && this.row+dy>0 && this.row+dy < blocks[this.column].length 
+            && blocks[this.column+dx][this.row+dy].type==="empty"){
+            this.column += dx;
+            this.row += dy;
+        }
+        console.log(this.column+","+this.row);
     }
 }
 
@@ -104,7 +109,7 @@ function onKeyDown(event) {
 function setUpWorld(){
     addEmptyBlocks(1);
     addBottomBlocks(5);
-    driller = new Driller(3,6);
+    driller = new Driller(3,5);
 
     // adding listeners to control driller
     // Focusing canvas so it can register events
@@ -141,7 +146,7 @@ function drawBlocks(){
 function drawDriller(){
     ctx.beginPath();
     ctx.fillStyle = "white";
-    ctx.arc(driller.column*60+30, canvas.height- driller.row*60+90, 29, 0, 2*Math.PI, true);
+    ctx.arc(driller.column*60+30, canvas.height -driller.row*60+30, 29, 0, 2*Math.PI, true);
     ctx.fill();
 }
 
