@@ -65,7 +65,6 @@ function Driller(column,row) {
             && this.row+dy>0 && this.row+dy < blocks[this.column].length
             && blocks[this.column+dx][this.row+dy].type==="empty"){
             this.column += dx;
-            this.row += dy;
         }
 
         if (dx < 0) this.drillDirection = "left";
@@ -144,7 +143,7 @@ function onKeyDown(event) {
 }
 
 function setUpWorld(){
-    addEmptyBlocks(1);
+    addEmptyBlocks(2);
     addBottomBlocks(5);
     driller = new Driller(3,5);
 
