@@ -4,7 +4,9 @@
 // Everything in this array can be drilled.
 var colors= ["red","blue","green","purple"];
 
-
+//maximum rows of blocks stored
+//blocks dissappear if they are 15 above the bottom of the screen
+var maxRows = 15;
 // variables so keycodes are more transparent
 var downarrow = 40;
 var uparrow = 38;
@@ -48,7 +50,7 @@ function onTimer() {
 function gravity(){
     //check if the driller should fall
     if(blocks[driller.column][driller.row-1].type === "empty"){
-        driller.fall();
+        addBottomBlocks(1);
     }
 
 }
@@ -132,6 +134,9 @@ function addBottomBlocks(depth){
         for(x=0; x<7;x++){
             // pushes a new item onto the beginning of the array
             blocks[x].unshift(new Block(colors[Math.floor(Math.random()*colors.length)]));
+            if(blocks[x].length>15){
+                blocks[x].pop();
+            }
         }
     }
     return blocks;
