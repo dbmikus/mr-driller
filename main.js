@@ -91,8 +91,22 @@ function Driller(column,row) {
         // Everything in colors can be drilled.
 
         if (colors.indexOf(toDrill.type) > -1) {
-            blocks[pos[0]][pos[1]] = new Block("empty");
+            recursiveDrill(pos[0], pos[1], toDrill.type);
+            // blocks[pos[0]][pos[1]] = new Block("empty");
         }
+    }
+}
+
+function recursiveDrill(x, y, blockType) {
+    if (blocks[x][y].type === blockType) {
+        blocks[x][y] = new Block("empty");
+
+        // Recursively check neighboring blocks to see if they are the same
+        // color, and if so drill them away
+        recursiveDrill(x+1, y,   blockType);
+        recursiveDrill(x-1, y,   blockType);
+        recursiveDrill(x,   y+1, blockType);
+        recursiveDrill(x,   y-1, blockType);
     }
 }
 
