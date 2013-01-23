@@ -1,39 +1,90 @@
 // Global variables
+
+// variables so keycodes are more transparent
+var downarrow = 40;
+var uparrow = 38;
+var leftarrow = 37;
+var rightarrow = 39;
+var spacebar = 32;
+
+var driller;
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
+
+// The number of columns of blocks (x width)
 var blockcolumns = 7;
+// A 2D array of blocks. Block at pos (0,0) is one below canvas display on
+// left side. This is like cartesian plane coordinates
 var blocks=[];
 for(i=0;i<blockcolumns;i++){
-    blocks.push([]);
+    blocks.push([]); // add second dimensional arrays to each index
 }
 
+// Sets up the world and draws objects on canvas
 function main() {
-    setUpWorld();
-    drawDisplay();
+    setUpWorld();  // does not handle drawings of objects
+
+    // Creating timer to draw screen
+    var timerDelay = 100;
+
+    var intervalId = setInterval(onTimer, timerDelay);
 }
 
+// Stuff that happens every time the timer fires
+function onTimer() {
+    drawDisplay(); // draws objects on screen
+}
+
+// The player's dude
 function Driller(column,row) {
     this.column = column;
     this.row = row;
 
+    // Receives input to move around digger
+    // Also does object collision detection
     this.move = function (dx, dy) {
-        this.xPos += dx;
-        this.yPos += dy;
+        this.column += dx;
+        this.row += dy;
     }
 }
 
-
+// Called whenever Mr. Driller moves down or whenever we want to add a new row
+// of blocks to the bottom of the array
 function addBottomBlocks(depth){
     for(d=0; d<depth; d++){
         for(x=0; x<7;x++){
+            // pushes a new item onto the beginning of the array
             blocks[x].unshift(Math.floor(Math.random()*4));
         }
     }
     return blocks;
 }
+
+function onKeyDown(event) {
+    var keycode = event.keyCode;
+
+    // Variables for where Mr. Driller moves
+    var dx = 0;
+    var dy = 0;
+
+    if (keycode === leftarrow) dx--
+    else if (keycode === rightarrow) dx++;
+    else if (keycode === uparrow) dy++;
+    else if (keycode === downarrow) dy--;
+
+    driller.move(dx, dy);
+    console.log(driller);
+}
+
 function setUpWorld(){
     addBottomBlocks(5);
     driller = new Driller(3,6);
+
+    // adding listeners to control driller
+    // Focusing canvas so it can register events
+    canvas.setAttribute('tabindex','0');
+    canvas.focus();
+    canvas.addEventListener('keydown', onKeyDown, false);
 }
 
 
@@ -50,6 +101,9 @@ function drawScoreboard(width, height) {
     ctx.stroke();
 }
 
+
+// Just offshores (to China) the drawing of blocks and figuring out whether to
+// connect blocks visually
 function drawBlocks(){
     for(column=0;column<blockcolumns;column++){
         for(index=0; index<blocks[column].length;index++){
@@ -72,12 +126,15 @@ function drawWorld() {
 }
 
 
+// This is the drawing function that happens every time
 function drawDisplay() {
     worldWidth = 420;
     drawScoreboard(canvas.width - worldWidth, canvas.height);
     drawWorld();
 }
 
+
+// If blocks are adjacent and same color, connects them
 function drawBlock(column,row,color){
     if(color===0)
         ctx.fillStyle = "blue";
