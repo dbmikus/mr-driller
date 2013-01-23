@@ -59,6 +59,7 @@ function drawBlocks(){
 }
 
 function drawDriller(){
+    ctx.beginPath();
     ctx.fillStyle = "white";
     ctx.arc(driller.column*60+30, canvas.height- driller.row*60+90, 29, 0, 2*Math.PI, true);
     ctx.fill();
@@ -95,6 +96,7 @@ function drawBlock(column,row,color){
     if(row>0 && blocks[column][row-1]===color){
         drawRoundedRectangle(ctx,column*60+5,canvas.height-index*60+5,
             50,110,5,color);
+        hasAdjacent = true;
     }
     if(hasAdjacent===false){
         drawRoundedRectangle(ctx,column*60+5,canvas.height-index*60+5,
