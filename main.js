@@ -104,13 +104,31 @@ function Driller(column,row) {
             pos = [this.column, this.row - 1];
 
 
-        var toDrill = blocks[pos[0]][pos[1]];
-        // Checks if the thing we are drilling is a drillable block.
-        // Everything in colors can be drilled.
+        if (pos[0] >= 0 && pos[0] < 7
+            && pos[1] >= 0 && pos[1] < 15) {
+            var toDrill = blocks[pos[0]][pos[1]];
 
-        if (colors.indexOf(toDrill.type) > -1) {
-            blocks[pos[0]][pos[1]] = new Block("empty");
+            // Checks if the thing we are drilling is a drillable block.
+            // Everything in colors can be drilled.
+            if (colors.indexOf(toDrill.type) > -1) {
+                recursiveDrill(pos[0], pos[1], toDrill.type);
+            }
         }
+    }
+}
+
+function recursiveDrill(x, y, blockType) {
+    if (x >= 0 && x < 7
+        && y >= 0 && y < 15
+        && blocks[x][y].type === blockType) {
+        blocks[x][y] = new Block("empty");
+
+        // Recursively check neighboring blocks to see if they are the same
+        // color, and if so drill them away
+        recursiveDrill(x+1, y,   blockType);
+        recursiveDrill(x-1, y,   blockType);
+        recursiveDrill(x,   y+1, blockType);
+        recursiveDrill(x,   y-1, blockType);
     }
 }
 
