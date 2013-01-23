@@ -1,11 +1,17 @@
 // Global variables
 
+//colors used for blocks
+var colors= ["red","blue","green","purple"];
+
+
 // variables so keycodes are more transparent
 var downarrow = 40;
 var uparrow = 38;
 var leftarrow = 37;
 var rightarrow = 39;
 var spacebar = 32;
+
+
 
 var driller;
 var canvas = document.getElementById("myCanvas");
@@ -35,6 +41,12 @@ function onTimer() {
     drawDisplay(); // draws objects on screen
 }
 
+//Block object
+function Block(type){
+    //string describing the content of the block
+    this.type = type;
+}
+
 // The player's dude
 function Driller(column,row) {
     this.column = column;
@@ -48,13 +60,26 @@ function Driller(column,row) {
     }
 }
 
+//adds a line of empty blocks at the bottom
+//used for initiating the screen
+function addEmptyBlocks(depth){
+    for(d=0; d<depth; d++){
+        for(x=0; x<7;x++){
+            // pushes a new item onto the beginning of the array
+            blocks[x].unshift(new Block("empty"));
+        }
+    }
+    return blocks;
+}
+
+
 // Called whenever Mr. Driller moves down or whenever we want to add a new row
 // of blocks to the bottom of the array
 function addBottomBlocks(depth){
     for(d=0; d<depth; d++){
         for(x=0; x<7;x++){
             // pushes a new item onto the beginning of the array
-            blocks[x].unshift(Math.floor(Math.random()*4));
+            blocks[x].unshift(new Block(colors[Math.floor(Math.random()*colors.length)]));
         }
     }
     return blocks;
@@ -77,6 +102,7 @@ function onKeyDown(event) {
 }
 
 function setUpWorld(){
+    addEmptyBlocks(1);
     addBottomBlocks(5);
     driller = new Driller(3,6);
 
@@ -107,7 +133,7 @@ function drawScoreboard(width, height) {
 function drawBlocks(){
     for(column=0;column<blockcolumns;column++){
         for(index=0; index<blocks[column].length;index++){
-            drawBlock(column,index,blocks[column][index]);
+            drawBlock(column,index,blocks[column][index].type);
         }
     }
 }
@@ -136,21 +162,25 @@ function drawDisplay() {
 
 // If blocks are adjacent and same color, connects them
 function drawBlock(column,row,color){
-    if(color===0)
+    //dont draw anything for empty blocks
+    if(color ==="empty")
+        return;
+    if(color==="blue")
         ctx.fillStyle = "blue";
-    else if(color===1)
+    else if(color==="green")
         ctx.fillStyle = "green";
-    else if(color===2)
+    else if(color==="red")
         ctx.fillStyle = "red";
-    else if(color===3)
+    else if(color==="purple")
         ctx.fillStyle = "purple";
     var hasAdjacent = false;
-    if(column>0 && blocks[column-1][row]===color){
+    //detects overlap
+    if(column>0 && blocks[column-1][row].type===color){
         drawRoundedRectangle(ctx,(column-1)*60+5,canvas.height-index*60+5,
             110,50,5,color);
         hasAdjacent =true;
     }
-    if(row>0 && blocks[column][row-1]===color){
+    if(row>0 && blocks[column][row-1].type===color){
         drawRoundedRectangle(ctx,column*60+5,canvas.height-index*60+5,
             50,110,5,color);
         hasAdjacent = true;
