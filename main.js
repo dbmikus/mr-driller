@@ -40,7 +40,19 @@ function main() {
 // Stuff that happens every time the timer fires
 function onTimer() {
     drawDisplay(); // draws objects on screen
+    gravity();
 }
+
+//checks all things that can fall to see if they should be falling,
+//then makes them fall
+function gravity(){
+    //check if the driller should fall
+    if(blocks[driller.column][driller.row-1].type === "empty"){
+        driller.fall();
+    }
+
+}
+
 
 //Block object
 function Block(type){
@@ -71,6 +83,10 @@ function Driller(column,row) {
         else if (dx > 0) this.drillDirection = "right";
         else if (dy < 0) this.drillDirection = "down";
         else if (dy > 0) this.drillDirection = "up";
+    }
+
+    this.fall = function(){
+        this.row--;
     }
 
     this.drill = function () {
