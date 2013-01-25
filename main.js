@@ -3,6 +3,14 @@
 //colors used for blocks.
 // Everything in this array can be drilled.
 var colors= ["red","blue","green","purple"];
+function canDrill(block) {
+    return (colors.indexOf(block.type) > -1);
+}
+// Returns the indices of the groups of blocks that should fall
+// Returns an empty list if the group should not fall
+function fallGroup(block) {
+    return (colors.indexOf(block.type) > -1);
+}
 
 //maximum rows of blocks stored
 //blocks dissappear if they are 15 above the bottom of the screen
@@ -53,6 +61,14 @@ function gravity(){
         addBottomBlocks(1);
     }
 
+    // Checks if any of the groups of blocks should fall
+    var column;
+    for (column=0; column<blocks.length; column++) {
+        var row;
+        for (row=0; row < blocks[column].length; row++) {
+
+        }
+    }
 }
 
 
@@ -110,26 +126,59 @@ function Driller(column,row) {
 
             // Checks if the thing we are drilling is a drillable block.
             // Everything in colors can be drilled.
-            if (colors.indexOf(toDrill.type) > -1) {
-                recursiveDrill(pos[0], pos[1], toDrill.type);
+            if (canDrill(toDrill)) {
+                // Get the group of blocks to be drilled
+                var drillGroup = getBlockGroup(pos[0], pos[1], toDrill.type);
+
+                // Drill that group of blocks
+                drillGroup.forEach(function (point) {
+                    blocks[point.x][point.y] = new Block("empty");
+                });
             }
         }
     }
 }
 
-function recursiveDrill(x, y, blockType) {
-    if (x >= 0 && x < 7
-        && y >= 0 && y < 15
-        && blocks[x][y].type === blockType) {
-        blocks[x][y] = new Block("empty");
 
-        // Recursively check neighboring blocks to see if they are the same
-        // color, and if so drill them away
-        recursiveDrill(x+1, y,   blockType);
-        recursiveDrill(x-1, y,   blockType);
-        recursiveDrill(x,   y+1, blockType);
-        recursiveDrill(x,   y-1, blockType);
+// Given a position and a type of block, recursively finds a connected group of
+// blocks of that type starting at that position. Returns an array of points,
+// with a point for each block in the group
+function getBlockGroup(x, y, blockType) {
+    var checkTable = {};
+    var groupList = [];
+
+    function formatKey(x, y) {
+        return (String(x) + " " + String(y));
     }
+
+    function wasChecked (x, y) {
+        return checkTable[formatKey(x,y)] !== undefined;
+    }
+
+    function getBlockGroupHelper(x, y, blockType) {
+        if (x >= 0 && x < 7 // checking column borders
+            && y >= 0 && y < 15 // checking row borders
+            && blocks[x][y].type === blockType) { // checking for part of group
+            // determining if checked already to stop infinite recursion
+            if (!wasChecked(x,y)) {
+                // Add the block to the list of blocks in the group
+                groupList.push({"x" : x, "y": y});
+                // Add the item to the checked hash table
+                checkTable[formatKey(x,y)] = true;
+
+                // Recursively check neighboring blocks to see if they are the
+                // same color, and if so add them to group
+                getBlockGroupHelper(x+1, y,   blockType);
+                getBlockGroupHelper(x-1, y,   blockType);
+                getBlockGroupHelper(x,   y+1, blockType);
+                getBlockGroupHelper(x,   y-1, blockType);
+            }
+        }
+
+        return groupList;
+    }
+
+    return getBlockGroupHelper(x, y, blockType);
 }
 
 //adds a line of empty blocks at the bottom
@@ -321,7 +370,6 @@ function drawRoundedRectangle(ctx,x,y,width,height,radius){
     ctx.quadraticCurveTo(x,y,x,y+radius);
     ctx.fill();
 }
-
 
 
 main();
