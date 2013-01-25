@@ -6,11 +6,6 @@ var colors= ["red","blue","green","purple"];
 function canDrill(block) {
     return (colors.indexOf(block.type) > -1);
 }
-// Returns the indices of the groups of blocks that should fall
-// Returns an empty list if the group should not fall
-function fallGroup(block) {
-    return (colors.indexOf(block.type) > -1);
-}
 
 //maximum rows of blocks stored
 //blocks dissappear if they are 15 above the bottom of the screen
@@ -62,13 +57,61 @@ function gravity(){
     }
 
     // Checks if any of the groups of blocks should fall
-    var column;
-    for (column=0; column<blocks.length; column++) {
-        var row;
-        for (row=0; row < blocks[column].length; row++) {
+    // Creates an array the size of our blocks array, where true values mean
+    // that a block has already been analyzed.
+    // This way, we don't repeatedly check different parts of the same group.
+    var checkedGrid = [];
+    var i;
+    for (i = 0; i < blocks.length; i++) {
+        var inner = [];
+        var j;
+        for (j=0; j < blocks[i].length; j++) {
+            inner.push(false);
+        }
+        checkedGrid.push(false);
+    }
 
+    // Check every block to see if it and its group falls
+    var fallGroups = [];
+    var x;
+    for (x=0; x<blocks.length; x++) {
+        var y;
+        for (y=0; y < blocks[x].length; y++) {
+            // Group the block is part of has not yet been checked.
+            if (!checkedGrid[x][y]) {
+                var groupList = getBlockGroup(x, y, blocks[x][y].type);
+
+                // If the group can fall, add it to the list of falling groups,
+                // which we will move at the end of the block gravity loop.
+                if (groupFalls(groupList)) {
+                    fallGroups.concat(groupList);
+                }
+                // Add the blocks to the checked list
+                groupList.forEach(function (p) {
+                    checkedGrid[p.x][p.y] = true;
+                });
+            }
         }
     }
+
+    // Move all blocks that can fall downwards. At this point, we assume that
+    // every block below a group is empty and can be overwritten.
+    fallGroups.forEach(function (p) {
+        var block = blocks[p.x][p.y];
+        blocks[p.x][p.y - 1] = block;
+    })
+}
+
+// Expects a valid block grouping.
+// Checks that every block in the group is capable of falling one square.
+// Returns true if that is the case.
+function groupFalls(groupList) {
+    for p in groupList {
+        if (!canDrill(blocks[p.x][p.y-1].type)) { // TODO fix for air blocks
+            return false;
+        }
+    }
+    return true;
 }
 
 
