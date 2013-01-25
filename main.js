@@ -1,4 +1,6 @@
 // Global variables
+// TODO delete after testing
+window.doGravity = true
 
 //colors used for blocks.
 // Everything in this array can be drilled.
@@ -45,7 +47,8 @@ function main() {
 // Stuff that happens every time the timer fires
 function onTimer() {
     drawDisplay(); // draws objects on screen
-    gravity();
+    if (window.doGravity)
+        gravity();
 }
 
 //checks all things that can fall to see if they should be falling,
@@ -88,21 +91,17 @@ function blockGravity() {
         var x;
         for (x=0; x<blockcolumns; x++) {
             // Group the block is part of has not yet been checked.
-            if (checkedGrid[x][y] === "unchecked") {
-                if (blocks[x][y].type === "empty") {
-                    checkedGrid[x][y] = "falls";
-                }
+            if (blocks[x][y].type === "empty")
+                checkedGrid[x][y] = "falls";
+            else if (checkedGrid[x][y] === "unchecked") {
                 // The block will not be empty
-                else {
+                var groupList = getBlockGroup(x, y, blocks[x][y].type);
 
-                    var groupList = getBlockGroup(x, y, blocks[x][y].type);
-
-                    // If the group can fall, add it to the list of falling
-                    // groups, which we will move at the end of the block
-                    // gravity loop.
-                    // This adds the group to the checkedGrid
-                    checkedGrid = (groupFalls(groupList, checkedGrid));
-                }
+                // If the group can fall, add it to the list of falling
+                // groups, which we will move at the end of the block
+                // gravity loop.
+                // This adds the group to the checkedGrid
+                checkedGrid = (groupFalls(groupList, checkedGrid));
             }
         }
     }
@@ -117,9 +116,6 @@ function blockGravity() {
     // anything.
     for (y=1; y<maxRows; y++) {
         for(x=0; x<blockcolumns; x++) {
-            console.log(String(x) + " " + String(y));
-            console.log(blocks);
-            console.log(blocks[x][y].type);
             // if (blocks[x][y].type !== "empty"
             //     && checkedGrid[x][y] === "falls") {
             // Empty blocks only fall downwards if they are falling into a space
@@ -135,12 +131,14 @@ function blockGravity() {
                     blocks[x][y-1] = blocks[x][y];
                     // If something would fall into the top row, just make it
                     // empty. This way we don't have a forever falling column
-                    if (y === maxRows-1)
+                    if (y === maxRows-1 || checkedGrid[x][y+1] === "stays")
                         blocks[x][y] = new Block("empty");
                 }
             }
         }
     }
+
+    return checkedGrid;
 }
 
 // Expects a valid block grouping.
@@ -159,7 +157,7 @@ function groupFalls(groupList, checkedGrid) {
 
         // If the space below is not the bottom row and it is empty,
         // then set it to falls
-        else if (blocks[p.x][p.y-1] === "empty") {
+        else if (blocks[p.x][p.y-1].type === "empty") {
             checkedGrid[p.x][p.y-1] = "falls";
         }
 
@@ -522,5 +520,43 @@ function drawRoundedRectangle(ctx,x,y,width,height,radius){
     ctx.fill();
 }
 
+
+// TODO delete after testing
+function setTest() {
+    var newBlocks = [["purple", "red", "green", "purple", "red",
+                      "red", "red", "purple", "red", "red",
+                      "purple", "blue", "blue", "red", "green"],
+                     ["green", "green", "green", "red", "blue",
+                      "blue", "blue", "blue", "red", "blue",
+                      "purple", "purple", "empty", "green", "green"],
+                     ["green", "purple", "blue", "purple", "blue",
+                      "blue", "green", "purple", "green", "red",
+                      "red", "blue", "empty", "green", "blue"],
+                     ["blue", "red", "blue", "purple", "red",
+                      "red", "empty", "empty", "empty", "empty",
+                      "empty", "empty", "empty", "empty", "empty"],
+                     ["green", "purple", "green", "red", "red",
+                     "empty", "empty", "empty", "empty", "red",
+                     "red", "red", "purple", "blue", "empty"],
+                     ["red", "red", "blue", "green", "red",
+                     "empty", "red", "red", "red", "red",
+                     "green", "empty", "empty", "blue", "green"],
+                     ["blue", "purle", "blue", "blue", "green",
+                      "blue", "empty", "red", "red", "red",
+                      "green", "red", "purple", "green", "green"]];
+
+    driller.column = 4;
+    driller.row = 5;
+
+    window.doGravity = false;
+
+    var x;
+    for (x=0; x<newBlocks.length; x++) {
+        var y;
+        for (y=0; y<newBlocks[x].length; y++) {
+            blocks[x][y] = new Block(newBlocks[x][y]);
+        }
+    }
+}
 
 main();
