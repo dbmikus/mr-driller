@@ -47,8 +47,7 @@ function main() {
 // Stuff that happens every time the timer fires
 function onTimer() {
     drawDisplay(); // draws objects on screen
-    if (window.doGravity)
-        gravity();
+    gravity();
 }
 
 //checks all things that can fall to see if they should be falling,
@@ -518,45 +517,6 @@ function drawRoundedRectangle(ctx,x,y,width,height,radius){
     ctx.lineTo(x+radius,y);
     ctx.quadraticCurveTo(x,y,x,y+radius);
     ctx.fill();
-}
-
-
-// TODO delete after testing
-function setTest() {
-    var newBlocks = [["purple", "red", "green", "purple", "red",
-                      "red", "red", "purple", "red", "red",
-                      "purple", "blue", "blue", "red", "green"],
-                     ["green", "green", "green", "red", "blue",
-                      "blue", "blue", "blue", "red", "blue",
-                      "purple", "purple", "empty", "green", "green"],
-                     ["green", "purple", "blue", "purple", "blue",
-                      "blue", "green", "purple", "green", "red",
-                      "red", "blue", "empty", "green", "blue"],
-                     ["blue", "red", "blue", "purple", "red",
-                      "red", "empty", "empty", "empty", "empty",
-                      "empty", "empty", "empty", "empty", "empty"],
-                     ["green", "purple", "green", "red", "red",
-                     "empty", "empty", "empty", "empty", "red",
-                     "red", "red", "purple", "blue", "empty"],
-                     ["red", "red", "blue", "green", "red",
-                     "empty", "red", "red", "red", "red",
-                     "green", "empty", "empty", "blue", "green"],
-                     ["blue", "purle", "blue", "blue", "green",
-                      "blue", "empty", "red", "red", "red",
-                      "green", "red", "purple", "green", "green"]];
-
-    driller.column = 4;
-    driller.row = 5;
-
-    window.doGravity = false;
-
-    var x;
-    for (x=0; x<newBlocks.length; x++) {
-        var y;
-        for (y=0; y<newBlocks[x].length; y++) {
-            blocks[x][y] = new Block(newBlocks[x][y]);
-        }
-    }
 }
 
 main();
