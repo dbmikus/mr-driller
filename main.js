@@ -56,9 +56,15 @@ function gravity(){
         addBottomBlocks(1);
     }
 
+    blockGravity();
+}
+
+function blockGravity() {
     // Checks if any of the groups of blocks should fall
-    // Creates an array the size of our blocks array, where true values mean
-    // that a block has already been analyzed.
+    // Creates an array the size of our blocks array.
+    // "unchecked" means the space hasn't been checked for falling yet
+    // "falls" means the space will fall
+    // "stays" means the space will not fall
     // This way, we don't repeatedly check different parts of the same group.
     var checkedGrid = [];
     var i;
@@ -66,52 +72,141 @@ function gravity(){
         var inner = [];
         var j;
         for (j=0; j < blocks[i].length; j++) {
-            inner.push(false);
+            inner.push("unchecked");
         }
-        checkedGrid.push(false);
+        checkedGrid.push(inner);
     }
 
-    // Check every block to see if it and its group falls
-    var fallGroups = [];
-    var x;
-    for (x=0; x<blocks.length; x++) {
-        var y;
-        for (y=0; y < blocks[x].length; y++) {
+    // Start at the bottom row and check to see if groups of blocks will fall.
+    // Then, look at rows above and check to see if the blocks below are empty,
+    // which means they can fall into those empty spaces,
+    // or if the blocks below will also fall, which means the whole column up
+    // until that point will fall.
+    // We need to start at the bottom so that multiple groups can fall in unison
+    var y;
+    for (y=0; y<maxRows; y++) {
+        var x;
+        for (x=0; x<blockcolumns; x++) {
             // Group the block is part of has not yet been checked.
-            if (!checkedGrid[x][y]) {
-                var groupList = getBlockGroup(x, y, blocks[x][y].type);
-
-                // If the group can fall, add it to the list of falling groups,
-                // which we will move at the end of the block gravity loop.
-                if (groupFalls(groupList)) {
-                    fallGroups.concat(groupList);
+            if (checkedGrid[x][y] === "unchecked") {
+                if (blocks[x][y].type === "empty") {
+                    checkedGrid[x][y] = "falls";
                 }
-                // Add the blocks to the checked list
-                groupList.forEach(function (p) {
-                    checkedGrid[p.x][p.y] = true;
-                });
+                // The block will not be empty
+                else {
+
+                    var groupList = getBlockGroup(x, y, blocks[x][y].type);
+
+                    // If the group can fall, add it to the list of falling
+                    // groups, which we will move at the end of the block
+                    // gravity loop.
+                    // This adds the group to the checkedGrid
+                    checkedGrid = (groupFalls(groupList, checkedGrid));
+                }
             }
         }
     }
 
-    // Move all blocks that can fall downwards. At this point, we assume that
-    // every block below a group is empty and can be overwritten.
-    fallGroups.forEach(function (p) {
-        var block = blocks[p.x][p.y];
-        blocks[p.x][p.y - 1] = block;
-    })
+    // Move all blocks that fall down by one.
+    // If they are on the bottom and are falling, just forget about them. This
+    // should only happen to empty blocks on the bottom row, which I'm pretty
+    // sure we won't spawn, but it's better to be safe than sorry.
+    // We start on the second row because the bottom row cannot move down
+    // any further.
+    // We start at the bottom and work our way up so we do not overwrite
+    // anything.
+    for (y=1; y<maxRows; y++) {
+        for(x=0; x<blockcolumns; x++) {
+            console.log(String(x) + " " + String(y));
+            console.log(blocks);
+            console.log(blocks[x][y].type);
+            // if (blocks[x][y].type !== "empty"
+            //     && checkedGrid[x][y] === "falls") {
+            // Empty blocks only fall downwards if they are falling into a space
+            // that will become empty.
+            // TODO There might be a cleaner way to do this.
+            if (checkedGrid[x][y] === "falls") {
+                if (blocks[x][y].type === "empty") {
+                    if (checkedGrid[x][y-1] === "falls") {
+                        blocks[x][y-1] = blocks[x][y];
+                    }
+                }
+                else {
+                    blocks[x][y-1] = blocks[x][y];
+                    // If something would fall into the top row, just make it
+                    // empty. This way we don't have a forever falling column
+                    if (y === maxRows-1)
+                        blocks[x][y] = new Block("empty");
+                }
+            }
+        }
+    }
 }
 
 // Expects a valid block grouping.
 // Checks that every block in the group is capable of falling one square.
 // Returns true if that is the case.
-function groupFalls(groupList) {
-    for p in groupList {
-        if (!canDrill(blocks[p.x][p.y-1].type)) { // TODO fix for air blocks
-            return false;
+function groupFalls(groupList, checkedGrid) {
+    var canFall = true;
+
+    groupList.forEach(function (p) {
+        // Set the status to checking to avoid infinite recursion
+        checkedGrid[p.x][p.y] = "checking";
+
+        // Checks to see if the group is on the bottom of the grid
+        // and cannot go any lower
+        if (p.y === 0) canFall = false;
+
+        // If the space below is not the bottom row and it is empty,
+        // then set it to falls
+        else if (blocks[p.x][p.y-1] === "empty") {
+            checkedGrid[p.x][p.y-1] = "falls";
         }
+
+        // Case for lower block: "stays"
+        // Check if the block below must stay and cannot fall
+        if (canFall && checkedGrid[p.x][p.y-1] === "stays") {
+            canFall = false;
+        }
+        // Case for lower block: "unchecked"
+        // The block below is not empty, and it is unchecked, so check the group
+        // it belongs to and then report back.
+        // Should only do recursive check if we are looking at a different
+        // group, so compare types and only proceed if unequal.
+        else if (canFall && checkedGrid[p.x][p.y-1] === "unchecked"
+                && blocks[p.x][p.y].type !== blocks[p.x][p.y-1]) {
+            checkedGrid = groupFalls(getBlockGroup(p.x, p.y-1,
+                                                   blocks[p.x][p.y-1].type),
+                                    checkedGrid);
+
+            // At this point, we should have recursively looked below until the
+            // spot has value "falls" or "stays"
+            if (checkedGrid[p.x][p.y-1] === "stays") canFall = false;
+        }
+        // Case for lower block: "falls"
+        // TODO: Case is redundant and unecessary. Remove it
+        else if (canFall && checkedGrid[p.x][p.y-1] === "falls")
+            canFall = true;
+    });
+
+    // If canFall is true, then set the whole group to "falls"
+    // Otherwise, set it to "stays"
+    if (canFall) {
+        groupList.forEach(function (p) {
+            checkedGrid[p.x][p.y] = "falls";
+        });
     }
-    return true;
+    // Otherwise, some part of the group cannot fall so the whole group
+    // cannot fall
+    else {
+        groupList.forEach(function (p) {
+            checkedGrid[p.x][p.y] = "stays";
+        });
+    }
+
+    // At this point, the group should either be all "falls" or all "stays". It
+    // should not be unchecked or checking
+    return checkedGrid;
 }
 
 
@@ -240,7 +335,9 @@ function addEmptyBlocks(depth){
 // Called whenever Mr. Driller moves down or whenever we want to add a new row
 // of blocks to the bottom of the array
 function addBottomBlocks(depth){
+    var d;
     for(d=0; d<depth; d++){
+        var x;
         for(x=0; x<7;x++){
             // pushes a new item onto the beginning of the array
             blocks[x].unshift(new Block(colors[Math.floor(Math.random()*colors.length)]));
@@ -250,6 +347,16 @@ function addBottomBlocks(depth){
         }
     }
     return blocks;
+}
+
+function fillEmpty() {
+    var x;
+    for (x=0; x < blockcolumns; x++) {
+        var y;
+        while (blocks[x].length < maxRows) {
+            blocks[x].push(new Block("empty"));
+        }
+    }
 }
 
 function onKeyDown(event) {
@@ -277,8 +384,9 @@ function onKeyDown(event) {
 }
 
 function setUpWorld(){
-    addEmptyBlocks(2);
-    addBottomBlocks(5);
+    addEmptyBlocks(2);  // add empty blocks at the bottom of the screen
+    addBottomBlocks(5); // add blocks to bottom of screen, pushing them up
+    fillEmpty();        // fill the rest of the grid with empty blocks
     driller = new Driller(3,5);
 
     // adding listeners to control driller
