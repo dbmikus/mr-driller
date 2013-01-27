@@ -16,7 +16,7 @@ var uparrow = 38;
 var leftarrow = 37;
 var rightarrow = 39;
 var spacebar = 32;
-
+var inGame = true;
 
 
 var driller;
@@ -55,10 +55,17 @@ function setUpWorld() {
     canvas.addEventListener('keydown', onKeyDown, false);
 }
 
+function gameOver(){
+    window.inGame=false;
+    drawGameOver();
+}
+
 // Stuff that happens every time the timer fires
 function onTimer() {
-    drawDisplay(); // draws objects on screen
-    gravity();
+    if(window.inGame=== true){
+        drawDisplay(); // draws objects on screen
+        gravity();
+    }
 }
 
 //checks all things that can fall to see if they should be falling,
@@ -71,12 +78,21 @@ function gravity(){
 
     var fallObj = blockGravity(blocks);
     window.blocks = fallObj.blockGrid;
+    //check if driller was crushed
+    if(window.blocks[driller.column][driller.row].type!=="empty"){
+        if(driller.kill())// if the user has another life
+            driller.revive();
+        else
+            gameOver();
+    }
 }
 
 // The player's dude
 function Driller(column,row) {
     this.column = column;
     this.row = row;
+    this.lives = 2;
+    this.alive = true;
 
     // Possibilities: left, right, up, down
     this.drillDirection = "down";
@@ -85,6 +101,9 @@ function Driller(column,row) {
     // Also does object collision detection
     // Pretty sure this will only be called with dx or dy non-zero. Not both
     this.move = function (dx, dy) {
+        if(this.alive === false){//prevent moving while driller is dead
+            return;
+        }
         // Checks for object collision for moving
         if(this.column+dx>=0 && this.column+dx<blockcolumns
             && this.row+dy>0 && this.row+dy < blocks[this.column].length
@@ -98,13 +117,33 @@ function Driller(column,row) {
         else if (dy > 0) this.drillDirection = "up";
     }
 
+    this.kill = function(){//kills the driller
+        this.alive= false;
+        this.lives--;
+        //returns true if the driller has more lives
+        return (this.lives >= 0);
+    }
+
+    this.revive = function(){
+        for(var i= this.column-1;i<=this.column+1;i++){
+            if(i<0 || i>=7)
+                continue;
+            for(var j = this.row; j<maxRows;j++){
+                blocks[i][j].type="empty";
+            }
+        this.alive=true;
+        }
+    }
+
     this.fall = function(){
         this.row--;
     }
 
     this.drill = function () {
         var pos;
-
+        if(this.alive===false){
+            return;
+        }
         if (this.drillDirection === "left")
             pos = [this.column - 1, this.row];
         else if (this.drillDirection === "right")
@@ -203,11 +242,28 @@ function onKeyDown(event) {
 ///////// graphics and drawing stuff /////////
 
 function drawScoreboard(width, height) {
-    ctx.beginPath();
-    ctx.moveTo(canvas.width - width, 0);
-    // Drawing vertical divider line
-    ctx.lineTo(canvas.width - width, height);
-    ctx.stroke();
+    ctx.fillStyle = "black";
+    ctx.fillRect(0,0,worldWidth,canvas.height);
+    ctx.fillRect(canvas.width - width,0,width,height);
+    ctx.fill();
+    ctx.fillStyle = "white";    
+    ctx.font = "35px Arial";
+    ctx.fillText("LIVES:"+driller.lives,
+        canvas.width - width + 10 , height/10);
+
+}
+
+
+function drawGameOver(){
+    ctx.fillStyle= "rgba(0,0,0,.5)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fill();
+    ctx.fillStyle= "rgba(255,255,255,.5)";    
+    ctx.font = "60px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2);
+    ctx.fill();
+
 }
 
 
