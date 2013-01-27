@@ -154,8 +154,11 @@ function Driller(column,row) {
             pos = [this.column, this.row - 1];
 
 
+        // Check that block is within the bounds of the grid,
+        // and disable player from drilling blocks that are currently falling
         if (pos[0] >= 0 && pos[0] < 7
-            && pos[1] >= 0 && pos[1] < 15) {
+            && pos[1] >= 0 && pos[1] < 15
+            && blocks[pos[0]][pos[1]].state !== "falling") {
             var toDrill = blocks[pos[0]][pos[1]];
 
             // Checks if the thing we are drilling is a drillable block.
@@ -246,7 +249,7 @@ function drawScoreboard(width, height) {
     ctx.fillRect(0,0,worldWidth,canvas.height);
     ctx.fillRect(canvas.width - width,0,width,height);
     ctx.fill();
-    ctx.fillStyle = "white";    
+    ctx.fillStyle = "white";
     ctx.font = "35px Arial";
     ctx.fillText("LIVES:"+driller.lives,
         canvas.width - width + 10 , height/10);
@@ -258,7 +261,7 @@ function drawGameOver(){
     ctx.fillStyle= "rgba(0,0,0,.5)";
     ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.fill();
-    ctx.fillStyle= "rgba(255,255,255,.5)";    
+    ctx.fillStyle= "rgba(255,255,255,.5)";
     ctx.font = "60px Arial";
     ctx.textAlign = "center";
     ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2);
