@@ -70,10 +70,15 @@ function onTimer() {
 
 //checks all things that can fall to see if they should be falling,
 //then makes them fall
-function gravity(){
+function gravity() {
     //check if the driller should fall
     if(blocks[driller.column][driller.row-1].type === "empty"){
-        addBottomBlocks(1);
+        if (driller.countdown === 0) {
+            addBottomBlocks(1);
+            driller.resetCountdown();
+        } else {
+            driller.countdown -= 1;
+        }
     }
 
     var fallObj = blockGravity(blocks);
@@ -89,6 +94,9 @@ function gravity(){
 
 // The player's dude
 function Driller(column,row) {
+    var countdownFactor = 2;
+
+    this.countdown = countdownFactor;
     this.column = column;
     this.row = row;
     this.lives = 2;
@@ -174,6 +182,10 @@ function Driller(column,row) {
                 });
             }
         }
+    }
+
+    this.resetCountdown = function () {
+        this.countdown = countdownFactor;
     }
 }
 
