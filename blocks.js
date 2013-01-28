@@ -11,6 +11,9 @@ function Block(type, state){
 
     //string describing the content of the block
     this.type = type;
+    //number of drills until the block is destroyed
+    //if the block is a durable block
+    this.health= 3;
 
     if (state === undefined) {
         state = "stationary";
