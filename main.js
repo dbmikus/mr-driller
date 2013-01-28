@@ -17,8 +17,8 @@ var leftarrow = 37;
 var rightarrow = 39;
 var spacebar = 32;
 var inGame = true;
-
-
+var worldWidth = 420;
+var score = 0;
 var driller;
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
@@ -65,6 +65,7 @@ function onTimer() {
     if(window.inGame=== true){
         drawDisplay(); // draws objects on screen
         gravity();
+        driller.breathe();
     }
 }
 
@@ -74,16 +75,14 @@ function gravity(){
     //check if the driller should fall
     if(blocks[driller.column][driller.row-1].type === "empty"){
         addBottomBlocks(1);
+        driller.depth+=5;
     }
 
     var fallObj = blockGravity(blocks);
     window.blocks = fallObj.blockGrid;
     //check if driller was crushed
     if(window.blocks[driller.column][driller.row].type!=="empty"){
-        if(driller.kill())// if the user has another life
-            driller.revive();
-        else
-            gameOver();
+        driller.kill();
     }
 }
 
@@ -93,7 +92,8 @@ function Driller(column,row) {
     this.row = row;
     this.lives = 2;
     this.alive = true;
-
+    this.depth = 0;
+    this.air = 100;
     // Possibilities: left, right, up, down
     this.drillDirection = "down";
 
@@ -117,11 +117,21 @@ function Driller(column,row) {
         else if (dy > 0) this.drillDirection = "up";
     }
 
+    this.breathe = function(){
+        this.air-=.25;
+        if(this.air===0){
+            this.kill();
+        }
+    }
+
     this.kill = function(){//kills the driller
         this.alive= false;
         this.lives--;
-        //returns true if the driller has more lives
-        return (this.lives >= 0);
+        if(this.lives>=0){
+            this.revive();
+        } 
+        else
+            gameOver();
     }
 
     this.revive = function(){
@@ -131,6 +141,7 @@ function Driller(column,row) {
             for(var j = this.row; j<maxRows;j++){
                 blocks[i][j].type="empty";
             }
+        this.air =100;
         this.alive=true;
         }
     }
@@ -168,6 +179,7 @@ function Driller(column,row) {
                 // Drill that group of blocks
                 drillGroup.forEach(function (point) {
                     blocks[point.x][point.y] = new Block("empty");
+                    window.score+=1;
                 });
             }
         }
@@ -245,16 +257,63 @@ function drawScoreboard(width, height) {
     ctx.fillStyle = "black";
     ctx.fillRect(0,0,worldWidth,canvas.height);
     ctx.fillRect(canvas.width - width,0,width,height);
-    ctx.fill();
+    ctx.fillStyle = "green";
+    drawRoundedRectangle(ctx,canvas.width - width + 5,
+        height/9 -30,
+        width-5,35,5);    
     ctx.fillStyle = "white";    
     ctx.font = "35px Arial";
-    ctx.fillText("LIVES:"+driller.lives,
-        canvas.width - width + 10 , height/10);
+    ctx.fillText("LIVES ",
+        canvas.width - width + 10 , height/9);
+    ctx.textAlign="right";
+    ctx.fillText(""+driller.lives,
+        canvas.width - 10 , 2*height/9);    
+    ctx.textAlign= "left";
+    ctx.fillStyle = "red";
+    drawRoundedRectangle(ctx,canvas.width - width + 5,
+        3*height/9 -30,
+        width-5,35,5);    
+    ctx.fillStyle = "white";    
+    ctx.fillText("DEPTH: ",
+        canvas.width - width + 10 , 3*height/9);
+    ctx.textAlign="right";
+    ctx.fillText(""+driller.depth+"ft",
+        canvas.width -10  , 4*height/9);
+    ctx.textAlign= "left";
+    ctx.fillStyle = "blue";
+    drawRoundedRectangle(ctx,canvas.width - width + 5,
+        5*height/9 -30,
+        width-5,35,5);    
+    ctx.fillStyle = "white";    
+    ctx.fillText("AIR: ",
+        canvas.width - width + 10 , 5*height/9);
+    drawRoundedRectangle(ctx,canvas.width - width + 10,
+        5.7*height/9,
+        width-20,20,5);
+    ctx.fillStyle= "lightblue";
+    drawRoundedRectangle(ctx,
+        (canvas.width - width + 15)+(1-driller.air/100)*(width -30),
+        5.7*height/9 +5,
+        (width-30)*(driller.air/100),10,1);
+    ctx.fillStyle= "purple";
+    drawRoundedRectangle(ctx,canvas.width - width + 5,
+        7*height/9 -30,
+        width-5,35,5);    
+    ctx.fillStyle = "white";    
+    ctx.fillText("SCORE: ",
+        canvas.width - width + 10 , 7*height/9);
+    ctx.textAlign="right";
+    ctx.fillText(""+window.score+"",
+        canvas.width -10  , 8*height/9);
+    ctx.textAlign= "left";
+
+
 
 }
 
 
 function drawGameOver(){
+    ctx.textAlign="left";
     ctx.fillStyle= "rgba(0,0,0,.5)";
     ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.fill();
@@ -262,8 +321,6 @@ function drawGameOver(){
     ctx.font = "60px Arial";
     ctx.textAlign = "center";
     ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2);
-    ctx.fill();
-
 }
 
 
@@ -281,7 +338,8 @@ function drawDriller(){
     // Draws Mr. Driller body
     ctx.beginPath();
     ctx.fillStyle = "white";
-    ctx.arc(driller.column*60+30, canvas.height - driller.row*60+30, 29, 0, 2*Math.PI, true);
+    ctx.arc(driller.column*60+30,
+        canvas.height - driller.row*60+30, 29, 0, 2*Math.PI, true);
     ctx.fill();
 
     // Draw Mr. Driller's drill
@@ -322,7 +380,6 @@ function drawWorld() {
 
 // This is the drawing function that happens every time
 function drawDisplay() {
-    worldWidth = 420;
     drawScoreboard(canvas.width - worldWidth, canvas.height);
     drawWorld();
 }
@@ -345,17 +402,17 @@ function drawBlock(column,row,color){
     //detects overlap
     if(column>0 && blocks[column-1][row].type===color){
         drawRoundedRectangle(ctx,(column-1)*60+5,canvas.height-index*60+5,
-            110,50,5,color);
+            110,50,5);
         hasAdjacent =true;
     }
     if(row>0 && blocks[column][row-1].type===color){
         drawRoundedRectangle(ctx,column*60+5,canvas.height-index*60+5,
-            50,110,5,color);
+            50,110,5);
         hasAdjacent = true;
     }
     if(hasAdjacent===false){
         drawRoundedRectangle(ctx,column*60+5,canvas.height-index*60+5,
-            50,50,5,color);
+            50,50,5);
     }
 }
 
