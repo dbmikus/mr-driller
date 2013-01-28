@@ -10,6 +10,9 @@ function canDrill(block) {
 //maximum rows of blocks stored
 //blocks dissappear if they are 15 above the bottom of the screen
 var maxRows = 15;
+// The number of columns of blocks (x width)
+var blockcolumns = 7;
+
 // variables so keycodes are more transparent
 var downarrow = 40;
 var uparrow = 38;
@@ -23,8 +26,6 @@ var driller;
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 
-// The number of columns of blocks (x width)
-var blockcolumns = 7;
 // A 2D array of blocks. Block at pos (0,0) is one below canvas display on
 // left side. This is like cartesian plane coordinates
 var blocks=[];
@@ -67,6 +68,8 @@ function onTimer() {
         gravity();
         driller.breathe();
     }
+
+    blocks = animate(blocks);
 }
 
 //checks all things that can fall to see if they should be falling,
@@ -101,6 +104,39 @@ function gravity() {
         driller.kill();
     }
 }
+
+function animate(blocks) {
+    var x = 0;
+    var y = 0;
+
+    // If block is in middle, shake left
+    // If block is left, shake right
+    function shakeBlock(block) {
+        blockOffset = 5;
+
+        if (block.xOffset >= 0) {
+            block.xOffset = -blockOffset;
+        } else if (block.xOffset < 0) {
+            block.xOffset = blockOffset;
+        }
+
+        return block;
+    }
+
+    for (y = 0; y < maxRows; y++) {
+        for (x = 0; x < blockcolumns; x++) {
+            if (blocks[x][y].state === "shaking") {
+                blocks[x][y] = shakeBlock(blocks[x][y]);
+            } else {
+                blocks[x][y].xOffset = 0;
+            }
+        }
+    }
+
+    return blocks;
+}
+
+
 
 // The player's dude
 function Driller(column,row) {
@@ -157,7 +193,7 @@ function Driller(column,row) {
         this.lives--;
         if(this.lives>=0){
             this.revive();
-        } 
+        }
         else
             gameOver();
     }
@@ -306,20 +342,20 @@ function drawScoreboard(width, height) {
     ctx.fillStyle = "green";
     drawRoundedRectangle(ctx,canvas.width - width + 5,
         height/9 -30,
-        width-5,35,5);    
-    ctx.fillStyle = "white";    
+        width-5,35,5);
+    ctx.fillStyle = "white";
     ctx.font = "35px Arial";
     ctx.fillText("LIVES ",
         canvas.width - width + 10 , height/9);
     ctx.textAlign="right";
     ctx.fillText(""+driller.lives,
-        canvas.width - 10 , 2*height/9);    
+        canvas.width - 10 , 2*height/9);
     ctx.textAlign= "left";
     ctx.fillStyle = "red";
     drawRoundedRectangle(ctx,canvas.width - width + 5,
         3*height/9 -30,
-        width-5,35,5);    
-    ctx.fillStyle = "white";    
+        width-5,35,5);
+    ctx.fillStyle = "white";
     ctx.fillText("DEPTH: ",
         canvas.width - width + 10 , 3*height/9);
     ctx.textAlign="right";
@@ -329,8 +365,8 @@ function drawScoreboard(width, height) {
     ctx.fillStyle = "blue";
     drawRoundedRectangle(ctx,canvas.width - width + 5,
         5*height/9 -30,
-        width-5,35,5);    
-    ctx.fillStyle = "white";    
+        width-5,35,5);
+    ctx.fillStyle = "white";
     ctx.fillText("AIR: ",
         canvas.width - width + 10 , 5*height/9);
     drawRoundedRectangle(ctx,canvas.width - width + 10,
@@ -344,8 +380,8 @@ function drawScoreboard(width, height) {
     ctx.fillStyle= "purple";
     drawRoundedRectangle(ctx,canvas.width - width + 5,
         7*height/9 -30,
-        width-5,35,5);    
-    ctx.fillStyle = "white";    
+        width-5,35,5);
+    ctx.fillStyle = "white";
     ctx.fillText("SCORE: ",
         canvas.width - width + 10 , 7*height/9);
     ctx.textAlign="right";
@@ -367,17 +403,6 @@ function drawGameOver(){
     ctx.font = "60px Arial";
     ctx.textAlign = "center";
     ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2);
-}
-
-
-// Just offshores (to China) the drawing of blocks and figuring out whether to
-// connect blocks visually
-function drawBlocks(){
-    for(column=0;column<blockcolumns;column++){
-        for(index=0; index<blocks[column].length;index++){
-            drawBlock(column,index,blocks[column][index].type);
-        }
-    }
 }
 
 function drawDriller(){
@@ -431,6 +456,16 @@ function drawDisplay() {
 }
 
 
+// Just offshores (to China) the drawing of blocks and figuring out whether to
+// connect blocks visually
+function drawBlocks(){
+    for(column=0;column<blockcolumns;column++){
+        for(index=0; index<blocks[column].length;index++){
+            drawBlock(column,index,blocks[column][index].type);
+        }
+    }
+}
+
 // If blocks are adjacent and same color, connects them
 function drawBlock(column,row,type){
     //dont draw anything for empty blocks
@@ -451,20 +486,27 @@ function drawBlock(column,row,type){
     else if(type==="durable")
         ctx.fillStyle = "brown";
     var hasAdjacent = false;
+
     //detects overlap
-    if(column>0 && blocks[column-1][row].type===type){
-        drawRoundedRectangle(ctx,(column-1)*60+5,canvas.height-index*60+5,
-            110,50,5);
-        hasAdjacent =true;
-    }
-    if(row>0 && blocks[column][row-1].type===type){
-        drawRoundedRectangle(ctx,column*60+5,canvas.height-index*60+5,
-            50,110,5);
+    if(column>0 && blocks[column-1][row].type===type) {
+        drawRoundedRectangle(ctx,
+                             (column-1)*60+5 + blocks[column][row].xOffset,
+                             canvas.height-index*60+5,
+                             110, 50, 5);
         hasAdjacent = true;
     }
-    if(hasAdjacent===false){
-        drawRoundedRectangle(ctx,column*60+5,canvas.height-index*60+5,
-            50,50,5);
+    if(row>0 && blocks[column][row-1].type===type) {
+        drawRoundedRectangle(ctx,
+                             column*60+5 + blocks[column][row].xOffset,
+                             canvas.height-index*60+5,
+                             50, 110, 5);
+        hasAdjacent = true;
+    }
+    if(hasAdjacent===false) {
+        drawRoundedRectangle(ctx,
+                             column*60+5 + blocks[column][row].xOffset,
+                             canvas.height-index*60+5,
+                             50, 50, 5);
     }
 }
 

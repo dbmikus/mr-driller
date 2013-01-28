@@ -21,6 +21,10 @@ function Block(type, state){
     this.state = state;
     this.countdown = countdownFactor;
 
+    // Pixel offsets used for animations
+    this.xOffset = 0;
+    this.yOffset = 0;
+
     this.changeState = function (newState) {
         this.countdown = countdownFactor;
         this.state = newState;
@@ -28,8 +32,8 @@ function Block(type, state){
 }
 
 // Given a position and a type of block, recursively finds a connected group of
-// blocks of that type starting at that position. Returns an array of points,
-// with a point for each block in the group
+// blocks of that type starting at that position.
+// Returns an array of points, with a point for each block in the group
 function getBlockGroup(blocks, x, y, blockType) {
     var checkTable = {};
     var groupList = [];
@@ -167,7 +171,26 @@ function blockGravityMove(blocks, checkedGrid) {
             }
             // The block does not fall, set its state to stationary
             else {
-                blocks[x][y].changeState("stationary");
+                // If the block was falling, it has the potential to fall into a
+                // group causing that group to become of size >= to 4
+                if (blocks[x][y].state === "falling") {
+                    var group = getBlockGroup(blocks, x, y, blocks[x][y].type);
+                    // If the group size is >= 4, delete the group
+                    // TODO increase player score?
+                    if (group.length >= 4) {
+                        group.forEach(function (point) {
+                            blocks[point.x][point.y] = new Block("empty");
+                        });
+                    }
+                    // Otherwise, the block just becomes stationary
+                    else {
+                        blocks[x][y].changeState("stationary");
+                    }
+                }
+                // Redundant possibly, but block becomes stationary
+                else {
+                    blocks[x][y].changeState("stationary");
+                }
             }
         }
     }
