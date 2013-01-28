@@ -18,6 +18,10 @@ function Block(type, state){
     this.state = state;
     this.countdown = countdownFactor;
 
+    // Pixel offsets used for animations
+    this.xOffset = 0;
+    this.yOffset = 0;
+
     this.changeState = function (newState) {
         this.countdown = countdownFactor;
         this.state = newState;

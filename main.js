@@ -10,6 +10,9 @@ function canDrill(block) {
 //maximum rows of blocks stored
 //blocks dissappear if they are 15 above the bottom of the screen
 var maxRows = 15;
+// The number of columns of blocks (x width)
+var blockcolumns = 7;
+
 // variables so keycodes are more transparent
 var downarrow = 40;
 var uparrow = 38;
@@ -23,8 +26,6 @@ var driller;
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
 
-// The number of columns of blocks (x width)
-var blockcolumns = 7;
 // A 2D array of blocks. Block at pos (0,0) is one below canvas display on
 // left side. This is like cartesian plane coordinates
 var blocks=[];
@@ -66,6 +67,8 @@ function onTimer() {
         drawDisplay(); // draws objects on screen
         gravity();
     }
+
+    blocks = animate(blocks);
 }
 
 //checks all things that can fall to see if they should be falling,
@@ -91,6 +94,39 @@ function gravity() {
             gameOver();
     }
 }
+
+function animate(blocks) {
+    var x = 0;
+    var y = 0;
+
+    // If block is in middle, shake left
+    // If block is left, shake right
+    function shakeBlock(block) {
+        blockOffset = 5;
+
+        if (block.xOffset >= 0) {
+            block.xOffset = -blockOffset;
+        } else if (block.xOffset < 0) {
+            block.xOffset = blockOffset;
+        }
+
+        return block;
+    }
+
+    for (y = 0; y < maxRows; y++) {
+        for (x = 0; x < blockcolumns; x++) {
+            if (blocks[x][y].state === "shaking") {
+                blocks[x][y] = shakeBlock(blocks[x][y]);
+            } else {
+                blocks[x][y].xOffset = 0;
+            }
+        }
+    }
+
+    return blocks;
+}
+
+
 
 // The player's dude
 function Driller(column,row) {
@@ -281,17 +317,6 @@ function drawGameOver(){
 
 }
 
-
-// Just offshores (to China) the drawing of blocks and figuring out whether to
-// connect blocks visually
-function drawBlocks(){
-    for(column=0;column<blockcolumns;column++){
-        for(index=0; index<blocks[column].length;index++){
-            drawBlock(column,index,blocks[column][index].type);
-        }
-    }
-}
-
 function drawDriller(){
     // Draws Mr. Driller body
     ctx.beginPath();
@@ -343,6 +368,16 @@ function drawDisplay() {
 }
 
 
+// Just offshores (to China) the drawing of blocks and figuring out whether to
+// connect blocks visually
+function drawBlocks(){
+    for(column=0;column<blockcolumns;column++){
+        for(index=0; index<blocks[column].length;index++){
+            drawBlock(column,index,blocks[column][index].type);
+        }
+    }
+}
+
 // If blocks are adjacent and same color, connects them
 function drawBlock(column,row,color){
     //dont draw anything for empty blocks
@@ -356,21 +391,32 @@ function drawBlock(column,row,color){
         ctx.fillStyle = "red";
     else if(color==="purple")
         ctx.fillStyle = "purple";
+
     var hasAdjacent = false;
+
     //detects overlap
-    if(column>0 && blocks[column-1][row].type===color){
-        drawRoundedRectangle(ctx,(column-1)*60+5,canvas.height-index*60+5,
-            110,50,5,color);
-        hasAdjacent =true;
-    }
-    if(row>0 && blocks[column][row-1].type===color){
-        drawRoundedRectangle(ctx,column*60+5,canvas.height-index*60+5,
-            50,110,5,color);
+    if(column>0 && blocks[column-1][row].type===color) {
+        drawRoundedRectangle(ctx,
+                             (column-1)*60+5 + blocks[column][row].xOffset,
+                             canvas.height-index*60+5,
+                             110, 50, 5,
+                             color);
         hasAdjacent = true;
     }
-    if(hasAdjacent===false){
-        drawRoundedRectangle(ctx,column*60+5,canvas.height-index*60+5,
-            50,50,5,color);
+    if(row>0 && blocks[column][row-1].type===color) {
+        drawRoundedRectangle(ctx,
+                             column*60+5 + blocks[column][row].xOffset,
+                             canvas.height-index*60+5,
+                             50, 110, 5,
+                             color);
+        hasAdjacent = true;
+    }
+    if(hasAdjacent===false) {
+        drawRoundedRectangle(ctx,
+                             column*60+5 + blocks[column][row].xOffset,
+                             canvas.height-index*60+5,
+                             50, 50, 5,
+                             color);
     }
 }
 
