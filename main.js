@@ -71,11 +71,16 @@ function onTimer() {
 
 //checks all things that can fall to see if they should be falling,
 //then makes them fall
-function gravity(){
+function gravity() {
     //check if the driller should fall
     if(blocks[driller.column][driller.row-1].type === "empty"){
-        addBottomBlocks(1);
-        driller.depth+=5;
+        if (driller.countdown === 0) {
+            addBottomBlocks(1);
+            driller.depth+=5;
+            driller.resetCountdown();
+        } else {
+            driller.countdown -= 1;
+        }
     }
 
     var fallObj = blockGravity(blocks);
@@ -88,6 +93,9 @@ function gravity(){
 
 // The player's dude
 function Driller(column,row) {
+    var countdownFactor = 2;
+
+    this.countdown = countdownFactor;
     this.column = column;
     this.row = row;
     this.lives = 2;
@@ -165,8 +173,11 @@ function Driller(column,row) {
             pos = [this.column, this.row - 1];
 
 
+        // Check that block is within the bounds of the grid,
+        // and disable player from drilling blocks that are currently falling
         if (pos[0] >= 0 && pos[0] < 7
-            && pos[1] >= 0 && pos[1] < 15) {
+            && pos[1] >= 0 && pos[1] < 15
+            && blocks[pos[0]][pos[1]].state !== "falling") {
             var toDrill = blocks[pos[0]][pos[1]];
 
             // Checks if the thing we are drilling is a drillable block.
@@ -183,6 +194,10 @@ function Driller(column,row) {
                 });
             }
         }
+    }
+
+    this.resetCountdown = function () {
+        this.countdown = countdownFactor;
     }
 }
 
@@ -317,7 +332,7 @@ function drawGameOver(){
     ctx.fillStyle= "rgba(0,0,0,.5)";
     ctx.fillRect(0,0,canvas.width,canvas.height);
     ctx.fill();
-    ctx.fillStyle= "rgba(255,255,255,.5)";    
+    ctx.fillStyle= "rgba(255,255,255,.5)";
     ctx.font = "60px Arial";
     ctx.textAlign = "center";
     ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2);
