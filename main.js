@@ -44,7 +44,7 @@ function main() {
 
 function setUpWorld() {
     addEmptyBlocks(2);  // add empty blocks at the bottom of the screen
-    addBottomBlocks(5); // add blocks to bottom of screen, pushing them up
+    addBottomBlocks(5,0,0); // add blocks to bottom of screen, pushing them up
     fillEmpty();        // fill the rest of the grid with empty blocks
     driller = new Driller(3,5);
 
@@ -73,10 +73,21 @@ function onTimer() {
 //then makes them fall
 function gravity() {
     //check if the driller should fall
-    if(blocks[driller.column][driller.row-1].type === "empty"){
+    if(blocks[driller.column][driller.row-1].type === "empty" ||
+        blocks[driller.column][driller.row-1].type === "air"){
         if (driller.countdown === 0) {
-            addBottomBlocks(1);
+            addBottomBlocks(1,
+                .01,
+                //this argument is the probability of a durable block
+                //essentially this is the function from depth to
+                //difficulty, since durable blocks make it harder
+                Math.pow(driller.depth/100,2)/
+                (5*Math.pow((driller.depth+300)/100,2)));
             driller.depth+=5;
+            if(window.blocks[driller.column][driller.row].type === "air"){
+                driller.airPocket();
+                blocks[driller.column][driller.row].type = "empty";
+            }
             driller.resetCountdown();
         } else {
             driller.countdown -= 1;
@@ -115,8 +126,13 @@ function Driller(column,row) {
         // Checks for object collision for moving
         if(this.column+dx>=0 && this.column+dx<blockcolumns
             && this.row+dy>0 && this.row+dy < blocks[this.column].length
-            && blocks[this.column+dx][this.row+dy].type==="empty"){
+            && (blocks[this.column+dx][this.row+dy].type==="empty"
+                || blocks[this.column+dx][this.row+dy].type==="air")){
             this.column += dx;
+            if(blocks[this.column][this.row].type==="air"){
+                blocks[this.column][this.row].type="empty";
+                this.airPocket();
+            }
         }
 
         if (dx < 0) this.drillDirection = "left";
@@ -125,9 +141,13 @@ function Driller(column,row) {
         else if (dy > 0) this.drillDirection = "up";
     }
 
+    this.airPocket = function(){
+        this.air = Math.min(this.air+30,100);
+    }
+
     this.breathe = function(){
         this.air-=.25;
-        if(this.air===0){
+        if(this.air<0){
             this.kill();
         }
     }
@@ -192,6 +212,12 @@ function Driller(column,row) {
                     blocks[point.x][point.y] = new Block("empty");
                     window.score+=1;
                 });
+            }else if(toDrill.type==="durable"){
+                toDrill.health--;
+                if(toDrill.health===0){
+                    blocks[pos[0]][pos[1]] = new Block("empty");
+                    this.air-= 10;
+                }
             }
         }
     }
@@ -216,13 +242,18 @@ function addEmptyBlocks(depth){
 
 // Called whenever Mr. Driller moves down or whenever we want to add a new row
 // of blocks to the bottom of the array
-function addBottomBlocks(depth){
+function addBottomBlocks(depth, airProbability, durableProbability){
     var d;
     for(d=0; d<depth; d++){
         var x;
         for(x=0; x<7;x++){
             // pushes a new item onto the beginning of the array
             blocks[x].unshift(new Block(colors[Math.floor(Math.random()*colors.length)]));
+            if(Math.random()<airProbability){
+                blocks[x][0].type = "air";
+            }else if(Math.random()<durableProbability){
+                blocks[x][0].type = "durable";
+            }
             if(blocks[x].length>15){
                 blocks[x].pop();
             }
@@ -401,26 +432,32 @@ function drawDisplay() {
 
 
 // If blocks are adjacent and same color, connects them
-function drawBlock(column,row,color){
+function drawBlock(column,row,type){
     //dont draw anything for empty blocks
-    if(color ==="empty")
+    if(type ==="empty")
         return;
-    if(color==="blue")
+    if(type==="blue")
         ctx.fillStyle = "blue";
-    else if(color==="green")
+    else if(type==="green")
         ctx.fillStyle = "green";
-    else if(color==="red")
+    else if(type==="red")
         ctx.fillStyle = "red";
-    else if(color==="purple")
+    else if(type==="purple")
         ctx.fillStyle = "purple";
+    // drawing air and durables should be different
+    // they don't connect
+    else if(type==="air")
+        ctx.fillStyle = "lightblue";
+    else if(type==="durable")
+        ctx.fillStyle = "brown";
     var hasAdjacent = false;
     //detects overlap
-    if(column>0 && blocks[column-1][row].type===color){
+    if(column>0 && blocks[column-1][row].type===type){
         drawRoundedRectangle(ctx,(column-1)*60+5,canvas.height-index*60+5,
             110,50,5);
         hasAdjacent =true;
     }
-    if(row>0 && blocks[column][row-1].type===color){
+    if(row>0 && blocks[column][row-1].type===type){
         drawRoundedRectangle(ctx,column*60+5,canvas.height-index*60+5,
             50,110,5);
         hasAdjacent = true;
