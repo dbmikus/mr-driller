@@ -74,6 +74,12 @@ function onTimer() {
         }
     }
 
+    // Check if Mr. Driller is in an air pocket
+    if (blocks[driller.column][driller.row].type==="air") {
+        blocks[driller.column][driller.row].type= "empty";
+        driller.airPocket();
+    }
+
     blocks = animate(blocks);
 }
 
@@ -105,7 +111,8 @@ function gravity() {
     var fallObj = blockGravity(blocks);
     blocks = fallObj.blockGrid;
     //check if driller was crushed
-    if(window.blocks[driller.column][driller.row].type!=="empty"
+    if(window.blocks[driller.column][driller.row].type !== "empty"
+       && window.blocks[driller.column][driller.row].type !== "air"
         && driller.alive===true){
         driller.kill();
     }
