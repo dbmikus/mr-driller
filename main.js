@@ -9,9 +9,9 @@ function canDrill(block) {
 
 //maximum rows of blocks stored
 //blocks dissappear if they are 15 above the bottom of the screen
-var maxRows = 15;
+var numRows = 15;
 // The number of columns of blocks (x width)
-var blockcolumns = 7;
+var numColumns = 7;
 
 // variables so keycodes are more transparent
 var downarrow = 40;
@@ -29,8 +29,8 @@ var ctx = canvas.getContext("2d");
 
 // A 2D array of blocks. Block at pos (0,0) is one below canvas display on
 // left side. This is like cartesian plane coordinates
-var blocks=[];
-for(i=0;i<blockcolumns;i++){
+var blocks = [];
+for(i=0;i<numColumns;i++){
     blocks.push([]); // add second dimensional arrays to each index
 }
 
@@ -39,7 +39,7 @@ function main() {
     setUpWorld();  // does not handle drawings of objects
 
     // Creating timer to draw screen
-    var timerDelay = 100;
+    var timerDelay = 50;
 
     var intervalId = setInterval(onTimer, timerDelay);
 }
@@ -103,7 +103,7 @@ function gravity() {
     }
 
     var fallObj = blockGravity(blocks);
-    window.blocks = fallObj.blockGrid;
+    blocks = fallObj.blockGrid;
     //check if driller was crushed
     if(window.blocks[driller.column][driller.row].type!=="empty"
         && driller.alive===true){
@@ -129,10 +129,12 @@ function animate(blocks) {
         return block;
     }
 
-    for (y = 0; y < maxRows; y++) {
-        for (x = 0; x < blockcolumns; x++) {
+    for (y = 0; y < numRows; y++) {
+        for (x = 0; x < numColumns; x++) {
             if (blocks[x][y].state === "shaking") {
-                blocks[x][y] = shakeBlock(blocks[x][y]);
+                if (blocks[x][y].countdown % 2 === 0) {
+                    blocks[x][y] = shakeBlock(blocks[x][y]);
+                }
             } else {
                 blocks[x][y].xOffset = 0;
             }
@@ -146,7 +148,7 @@ function animate(blocks) {
 
 // The player's dude
 function Driller(column,row) {
-    var countdownFactor = 2;
+    var countdownFactor = 4;
 
     this.countdown = countdownFactor;
     this.column = column;
@@ -167,7 +169,7 @@ function Driller(column,row) {
             return;
         }
         // Checks for object collision for moving
-        if(this.column+dx>=0 && this.column+dx<blockcolumns
+        if(this.column+dx>=0 && this.column+dx<numColumns
             && this.row+dy>0 && this.row+dy < blocks[this.column].length
             && (blocks[this.column+dx][this.row+dy].type==="empty"
                 || blocks[this.column+dx][this.row+dy].type==="air")){
@@ -197,8 +199,9 @@ function Driller(column,row) {
     }
 
     this.breathe = function(){
-        this.air-=.25;
-        if(this.air<0){
+        this.air -= .10;
+
+        if(this.air<0) {
             this.kill();
         }
     }
@@ -213,9 +216,9 @@ function Driller(column,row) {
 
     this.revive = function(){
         for(var i= this.column-1;i<=this.column+1;i++){
-            if(i<0 || i>=7)
+            if(i<0 || i>=numColumns)
                 continue;
-            for(var j = this.row; j<maxRows;j++){
+            for(var j = this.row; j<numRows;j++){
                 blocks[i][j].type="empty";
             }
         this.air =100;
@@ -244,8 +247,8 @@ function Driller(column,row) {
 
         // Check that block is within the bounds of the grid,
         // and disable player from drilling blocks that are currently falling
-        if (pos[0] >= 0 && pos[0] < 7
-            && pos[1] >= 0 && pos[1] < 15
+        if (pos[0] >= 0 && pos[0] < numColumns
+            && pos[1] >= 0 && pos[1] < numRows
             && blocks[pos[0]][pos[1]].state !== "falling") {
             var toDrill = blocks[pos[0]][pos[1]];
 
@@ -280,7 +283,7 @@ function Driller(column,row) {
 //used for initiating the screen
 function addEmptyBlocks(depth){
     for(d=0; d<depth; d++){
-        for(x=0; x<7;x++){
+        for(x=0; x<numColumns;x++){
             // pushes a new item onto the beginning of the array
             blocks[x].unshift(new Block("empty"));
         }
@@ -295,7 +298,7 @@ function addBottomBlocks(depth, airProbability, durableProbability){
     var d;
     for(d=0; d<depth; d++){
         var x;
-        for(x=0; x<7;x++){
+        for(x=0; x<numColumns;x++){
             // pushes a new item onto the beginning of the array
             blocks[x].unshift(new Block(colors[Math.floor(Math.random()*colors.length)]));
             if(Math.random()<airProbability){
@@ -303,7 +306,7 @@ function addBottomBlocks(depth, airProbability, durableProbability){
             }else if(Math.random()<durableProbability){
                 blocks[x][0].type = "durable";
             }
-            if(blocks[x].length>15){
+            if(blocks[x].length>numRows){
                 blocks[x].pop();
             }
         }
@@ -313,9 +316,9 @@ function addBottomBlocks(depth, airProbability, durableProbability){
 
 function fillEmpty() {
     var x;
-    for (x=0; x < blockcolumns; x++) {
+    for (x=0; x < numColumns; x++) {
         var y;
-        while (blocks[x].length < maxRows) {
+        while (blocks[x].length < numRows) {
             blocks[x].push(new Block("empty"));
         }
     }
@@ -406,7 +409,7 @@ function drawScoreboard(width, height) {
         width-20,20,5);
     ctx.fillStyle= "blue";
     drawRoundedRectangle(ctx,
-        (canvas.width - width + 15)+(1-driller.air/100)*(width -30),
+        (canvas.width - width + 15)+(1-driller.air/100)*(width - 30),
         5.7*height/9 +5,
         (width-30)*(driller.air/100),10,1);
     ctx.fillStyle= "purple";
@@ -415,7 +418,7 @@ function drawScoreboard(width, height) {
         width-5,35,5);
     ctx.fillStyle = "white";
     ctx.fillText("SCORE: ",
-        canvas.width - width + 10 , 7*height/9);
+        canvas.width - width + 10, 7*height/9);
     ctx.textAlign="right";
     ctx.fillText(""+window.score+"",
         canvas.width -10  , 8*height/9);
@@ -536,7 +539,7 @@ function drawDisplay() {
 // Just offshores (to China) the drawing of blocks and figuring out whether to
 // connect blocks visually
 function drawBlocks(){
-    for(column=0;column<blockcolumns;column++){
+    for(column=0; column<numColumns; column++){
         for(index=0; index<blocks[column].length;index++){
             drawBlock(column,index,blocks[column][index].type);
         }
@@ -545,45 +548,77 @@ function drawBlocks(){
 
 // If blocks are adjacent and same color, connects them
 function drawBlock(column,row,type){
+    function drawNormal(fillStyle) {
+        ctx.fillStyle = fillStyle;
+
+        var hasAdjacent = false;
+
+        //detects overlap
+        if(column>0 && blocks[column-1][row].type===type) {
+            drawRoundedRectangle(ctx,
+                                 (column-1)*60+5 + blocks[column][row].xOffset,
+                                 canvas.height-row*60+5,
+                                 110, 50, 5);
+            hasAdjacent = true;
+        }
+        if(row>0 && blocks[column][row-1].type===type) {
+            drawRoundedRectangle(ctx,
+                                 column*60+5 + blocks[column][row].xOffset,
+                                 canvas.height-row*60+5,
+                                 50, 110, 5);
+            hasAdjacent = true;
+        }
+        if(hasAdjacent===false) {
+            drawRoundedRectangle(ctx,
+                                 column*60+5 + blocks[column][row].xOffset,
+                                 canvas.height-row*60+5,
+                                 50, 50, 5);
+        }
+    }
+
+    function drawAir() {
+        ctx.fillStyle = "lightblue";
+        var radius = 12;
+        circle(ctx,
+               column*60 + (1.5 * radius) + blocks[column][row].xOffset,
+               canvas.height - (row-1)*60 - (1.5 * radius),
+               radius);
+
+        circle(ctx,
+               (column)*60 + 30 + blocks[column][row].xOffset,
+               canvas.height - (row)*60 + 30,
+               radius);
+
+        circle(ctx,
+               (column+1)*60 - (1.5 * radius) + blocks[column][row].xOffset,
+               canvas.height - (row)*60 + (1.5 * radius),
+               radius);
+    }
+
     //dont draw anything for empty blocks
     if(type ==="empty")
         return;
-    if(type==="blue")
-        ctx.fillStyle = "blue";
-    else if(type==="green")
-        ctx.fillStyle = "green";
-    else if(type==="red")
-        ctx.fillStyle = "red";
-    else if(type==="purple")
-        ctx.fillStyle = "purple";
+    if(type==="blue") {
+        drawNormal("blue");
+    }
+    else if(type==="green") {
+        drawNormal("green");
+    }
+    else if(type==="red") {
+        drawNormal("red");
+    }
+    else if(type==="purple") {
+        drawNormal("purple");
+    }
     // drawing air and durables should be different
     // they don't connect
-    else if(type==="air")
-        ctx.fillStyle = "lightblue";
-    else if(type==="durable")
+    else if(type==="air") {
+        // ctx.fillStyle = "lightblue";
+        drawAir();
+    }
+    else if(type==="durable") {
         ctx.fillStyle = "brown";
-    var hasAdjacent = false;
-
-    //detects overlap
-    if(column>0 && blocks[column-1][row].type===type) {
-        drawRoundedRectangle(ctx,
-                             (column-1)*60+5 + blocks[column][row].xOffset,
-                             canvas.height-index*60+5,
-                             110, 50, 5);
-        hasAdjacent = true;
-    }
-    if(row>0 && blocks[column][row-1].type===type) {
-        drawRoundedRectangle(ctx,
-                             column*60+5 + blocks[column][row].xOffset,
-                             canvas.height-index*60+5,
-                             50, 110, 5);
-        hasAdjacent = true;
-    }
-    if(hasAdjacent===false) {
-        drawRoundedRectangle(ctx,
-                             column*60+5 + blocks[column][row].xOffset,
-                             canvas.height-index*60+5,
-                             50, 50, 5);
+        drawNormal();
     }
 }
 
@@ -603,6 +638,12 @@ function drawRoundedRectangle(ctx,x,y,width,height,radius){
     ctx.quadraticCurveTo(x+width,y,x+width-radius,y);
     ctx.lineTo(x+radius,y);
     ctx.quadraticCurveTo(x,y,x,y+radius);
+    ctx.fill();
+}
+
+function circle(ctx, cx, cy, radius) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, 2*Math.PI, true);
     ctx.fill();
 }
 
