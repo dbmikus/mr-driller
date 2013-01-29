@@ -518,11 +518,42 @@ function drawBlock(column,row,type){
                radius);
     }
 
+    function drawDurable(block) {
+        var r = 122;
+        var g = 71;
+        var b = 20;
+        var a = 1 - (3 - block.health)*0.25;
+
+        ctx.fillStyle = rgbToString(r,g,b,a);
+        drawRoundedRectangle(ctx,
+                             column*60+5 + blocks[column][row].xOffset,
+                             canvas.height-row*60+5,
+                             50, 50, 5);
+
+        var innerTopLeft = {"x": column*60+10 + blocks[column][row].xOffset,
+                            "y": canvas.height-row*60+10};
+        ctx.fillStyle = rgbToString(r-20,g-20,b-20, a);
+        drawRoundedRectangle(ctx,
+                             innerTopLeft.x,
+                             innerTopLeft.y,
+                             40, 40, 5);
+
+        var oldWidth = ctx.lineWidth;
+        ctx.fillStyle = rgbToString(r+10, g+10, b+10, a);
+        ctx.lineWidth = 5;
+        drawLine(innerTopLeft.x+5, innerTopLeft.y+5,
+                 innerTopLeft.x + 35, innerTopLeft.y + 35);
+        drawLine(innerTopLeft.x+5, innerTopLeft.y + 35,
+                 innerTopLeft.x + 35, innerTopLeft.y+5);
+        ctx.lineWidth = oldWidth;
+    }
+
     //dont draw anything for empty blocks
     if(type ==="empty")
         return;
     if(type==="blue") {
         drawNormal("blue");
+//        drawDurable();
     }
     else if(type==="green") {
         drawNormal("green");
@@ -540,8 +571,7 @@ function drawBlock(column,row,type){
         drawAir();
     }
     else if(type==="durable") {
-        ctx.fillStyle = "brown";
-        drawNormal();
+        drawDurable(blocks[column][row]);
     }
 }
 
@@ -566,8 +596,32 @@ function drawRoundedRectangle(ctx,x,y,width,height,radius){
 
 function circle(ctx, cx, cy, radius) {
     ctx.beginPath();
+    ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, radius, 0, 2*Math.PI, true);
     ctx.fill();
+}
+
+function drawLine(x1, y1, x2, y2) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+}
+
+function rgbToString(r, g, b,a) {
+    var retStr;
+
+    if (a === undefined) {
+        retStr = ("rgb(" + String(r) + ","
+                  + String(g) + ","
+                  + String(b) + ")");
+    } else {
+        retStr = ("rgba(" + String(r) + ","
+                  + String(g) + ","
+                  + String(b) + ","
+                  + String(a) + ")");
+    }
+    return retStr;
 }
 
 main();
