@@ -7,7 +7,7 @@
 //   shaking
 //   falling
 function Block(type, state){
-    var countdownFactor = 3;
+    var countdownFactor = 6;
 
     //string describing the content of the block
     this.type = type;
@@ -26,7 +26,11 @@ function Block(type, state){
     this.yOffset = 0;
 
     this.changeState = function (newState) {
-        this.countdown = countdownFactor;
+        if (newState === "shaking") {
+            this.countdown = countdownFactor + 2;
+        } else {
+            this.countdown = countdownFactor;
+        }
         this.state = newState;
     }
 }
@@ -97,9 +101,9 @@ function blockGravity(blocks) {
     // until that point will fall.
     // We need to start at the bottom so that multiple groups can fall in unison
     var y;
-    for (y=0; y<maxRows; y++) {
+    for (y=0; y<blocks[0].length; y++) {
         var x;
-        for (x=0; x<blockcolumns; x++) {
+        for (x=0; x<blocks.length; x++) {
             // Group the block is part of has not yet been checked.
             if (blocks[x][y].type === "empty")
                 checkedGrid[x][y] = "falls";
@@ -129,8 +133,8 @@ function blockGravity(blocks) {
 // We start at the bottom and work our way up so we do not overwrite
 // anything.
 function blockGravityMove(blocks, checkedGrid) {
-    for (y=1; y<maxRows; y++) {
-        for(x=0; x<blockcolumns; x++) {
+    for (y=1; y<blocks[0].length; y++) {
+        for(x=0; x<blocks.length; x++) {
             // Empty blocks only fall downwards if they are falling into a space
             // that will become empty.
             // TODO There might be a cleaner way to do this.
@@ -164,7 +168,8 @@ function blockGravityMove(blocks, checkedGrid) {
                     }
                     // If something would fall into the top row, just make it
                     // empty. This way we don't have a forever falling column
-                    if (y === maxRows-1 || checkedGrid[x][y+1] === "stays") {
+                    if (y === blocks[x].length - 1
+                        || checkedGrid[x][y+1] === "stays") {
 //                        blocks[x][y] = new Block("empty");
                     }
                 }
