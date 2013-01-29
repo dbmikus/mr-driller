@@ -199,7 +199,7 @@ function Driller(column,row) {
     }
 
     this.breathe = function(){
-        this.air -= .10;
+        this.air -= .07;
 
         if(this.air<0) {
             this.kill();
@@ -348,7 +348,7 @@ function onKeyDown(event) {
     }
 
     // Restart
-    if (keycode === rKey 
+    if (keycode === rKey
         && window.inGame ===false){
         restartGame();
     }
@@ -363,7 +363,7 @@ function restartGame(){
     window.score = 0;
     window.depth = 0;
     setUpWorld();
-    window.inGame = true;    
+    window.inGame = true;
 }
 
 
