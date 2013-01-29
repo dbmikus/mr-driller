@@ -19,6 +19,7 @@ var uparrow = 38;
 var leftarrow = 37;
 var rightarrow = 39;
 var spacebar = 32;
+var rKey     = 82;
 var inGame = true;
 var worldWidth = 420;
 var score = 0;
@@ -66,7 +67,11 @@ function onTimer() {
     if(window.inGame=== true){
         drawDisplay(); // draws objects on screen
         gravity();
-        driller.breathe();
+        if(driller.alive === true){
+            driller.breathe();
+        }else{
+            driller.deathTime();
+        }
     }
 
     blocks = animate(blocks);
@@ -100,7 +105,8 @@ function gravity() {
     var fallObj = blockGravity(blocks);
     blocks = fallObj.blockGrid;
     //check if driller was crushed
-    if(window.blocks[driller.column][driller.row].type!=="empty"){
+    if(window.blocks[driller.column][driller.row].type!=="empty"
+        && driller.alive===true){
         driller.kill();
     }
 }
@@ -151,6 +157,7 @@ function Driller(column,row) {
     this.alive = true;
     this.depth = 0;
     this.air = 100;
+    this.timeDead = 0;
     // Possibilities: left, right, up, down
     this.drillDirection = "down";
 
@@ -183,6 +190,14 @@ function Driller(column,row) {
         this.air = Math.min(this.air+30,100);
     }
 
+    this.deathTime = function(){
+        this.timeDead +=1;
+        if(this.timeDead > 9){
+            this.timeDead =0;
+            this.revive();
+        }
+    }
+
     this.breathe = function(){
         this.air -= .10;
 
@@ -194,11 +209,9 @@ function Driller(column,row) {
     this.kill = function(){//kills the driller
         this.alive= false;
         this.lives--;
-        if(this.lives>=0){
-            this.revive();
-        }
-        else
+        if(this.lives<0){
             gameOver();
+        }
     }
 
     this.revive = function(){
@@ -333,7 +346,26 @@ function onKeyDown(event) {
     if (keycode === spacebar) {
         driller.drill();
     }
+
+    // Restart
+    if (keycode === rKey 
+        && window.inGame ===false){
+        restartGame();
+    }
 }
+
+function restartGame(){
+    blocks=[];
+    for(i=0;i<blockcolumns;i++){
+        blocks.push([]); // add second dimensional arrays to each index
+    }
+
+    window.score = 0;
+    window.depth = 0;
+    setUpWorld();
+    window.inGame = true;    
+}
+
 
 
 ///////// graphics and drawing stuff /////////
@@ -375,7 +407,7 @@ function drawScoreboard(width, height) {
     drawRoundedRectangle(ctx,canvas.width - width + 10,
         5.7*height/9,
         width-20,20,5);
-    ctx.fillStyle= "lightblue";
+    ctx.fillStyle= "blue";
     drawRoundedRectangle(ctx,
         (canvas.width - width + 15)+(1-driller.air/100)*(width - 30),
         5.7*height/9 +5,
@@ -391,9 +423,6 @@ function drawScoreboard(width, height) {
     ctx.fillText(""+window.score+"",
         canvas.width -10  , 8*height/9);
     ctx.textAlign= "left";
-
-
-
 }
 
 
@@ -406,43 +435,91 @@ function drawGameOver(){
     ctx.font = "60px Arial";
     ctx.textAlign = "center";
     ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2);
+    ctx.font = "40px Arial";
+    ctx.fillText("Press R to play again", canvas.width/2, canvas.height/2 + 70);
 }
 
 function drawDriller(){
     // Draws Mr. Driller body
     ctx.beginPath();
-    ctx.fillStyle = "white";
+    ctx.fillStyle = "pink";
     ctx.arc(driller.column*60+30,
-        canvas.height - driller.row*60+30, 29, 0, 2*Math.PI, true);
-    ctx.fill();
+        canvas.height - driller.row*60+15, 15, 0, 2*Math.PI, true);
+    ctx.fill()
+    drawRoundedRectangle(ctx, driller.column*60+24,
+                        canvas.height-driller.row*60+25,12,20,2);
+    ctx.strokeStyle = "pink";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(driller.column*60+14,
+                canvas.height-driller.row*60+60);
+    ctx.lineTo(driller.column*60+30,
+                canvas.height-driller.row*60+33);
+    ctx.lineTo(driller.column*60+46,
+                canvas.height-driller.row*60+60);
+    ctx.stroke();
+    ctx.closePath();
+    if(driller.alive === false){
+        ctx.strokeStyle  = "black";
+        ctx.lineWidth    = 4;
+        ctx.beginPath();
+        ctx.moveTo(driller.column*60+20,
+                canvas.height - driller.row*60+10);
+        ctx.lineTo(driller.column*60+40,
+                canvas.height - driller.row*60+20);
+        ctx.stroke();
+        ctx.moveTo(driller.column*60+20,
+                canvas.height - driller.row*60+20);
+        ctx.lineTo(driller.column*60+40,
+                canvas.height - driller.row*60+10);
+        ctx.stroke();
+        ctx.closePath();
+        ctx.strokeStyle = "pink";
+    }
+
 
     // Draw Mr. Driller's drill
-    ctx.beginPath();
-    ctx.fillStyle = "brown";
-
+    ctx.fillStyle = "#E01B6A";
     var drillOffset = 15;
     if (driller.drillDirection === "down") {
-        ctx.arc(driller.column*60+30,
-                canvas.height - driller.row*60+30 + drillOffset,
-                10, 0, 2*Math.PI, true);
+        ctx.beginPath();
+        ctx.moveTo(driller.column*60+25,
+                    canvas.height-driller.row*60+45);
+        ctx.lineTo(driller.column*60+30,
+                    canvas.height-driller.row*60+60);
+        ctx.lineTo(driller.column*60+35,
+                    canvas.height-driller.row*60+45);
+        ctx.fill();
     }
     else if (driller.drillDirection === "up") {
-        ctx.arc(driller.column*60+30,
-                canvas.height - driller.row*60+30 - drillOffset,
-                10, 0, 2*Math.PI, true);
+        ctx.beginPath();
+        ctx.moveTo(driller.column*60+25,
+                    canvas.height-driller.row*60+15);
+        ctx.lineTo(driller.column*60+30,
+                    canvas.height-driller.row*60);
+        ctx.lineTo(driller.column*60+35,
+                    canvas.height-driller.row*60+15);
+        ctx.fill();
     }
     else if (driller.drillDirection === "left") {
-        ctx.arc(driller.column*60+30 - drillOffset,
-                canvas.height - driller.row*60+30,
-                10, 0, 2*Math.PI, true);
+        ctx.beginPath();
+        ctx.moveTo(driller.column*60+15,
+                    canvas.height-driller.row*60+25);
+        ctx.lineTo(driller.column*60,
+                    canvas.height-driller.row*60+30);
+        ctx.lineTo(driller.column*60+15,
+                    canvas.height-driller.row*60+35);
+        ctx.fill();
     }
     else if (driller.drillDirection === "right") {
-        ctx.arc(driller.column*60+30 + drillOffset,
-                canvas.height - driller.row*60+30,
-                10, 0, 2*Math.PI, true);
-    }
-
-    ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(driller.column*60+45,
+                    canvas.height-driller.row*60+25);
+        ctx.lineTo(driller.column*60+60,
+                    canvas.height-driller.row*60+30);
+        ctx.lineTo(driller.column*60+45,
+                    canvas.height-driller.row*60+35);
+        ctx.fill();    }
 }
 
 function drawWorld() {
