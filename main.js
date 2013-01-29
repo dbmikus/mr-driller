@@ -92,7 +92,7 @@ function gravity() {
         blocks[driller.column][driller.row-1].type === "air"){
         if (driller.countdown === 0) {
             addBottomBlocks(1,
-                .01,
+                .015,
                 //this argument is the probability of a durable block
                 //essentially this is the function from depth to
                 //difficulty, since durable blocks make it harder
