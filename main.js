@@ -72,9 +72,8 @@ function onTimer() {
         }else{
             driller.deathTime();
         }
+        blocks = animate(blocks);
     }
-
-    blocks = animate(blocks);
 }
 
 //checks all things that can fall to see if they should be falling,
@@ -192,7 +191,7 @@ function Driller(column,row) {
 
     this.deathTime = function(){
         this.timeDead +=1;
-        if(this.timeDead > 9){
+        if(this.timeDead > 30){
             this.timeDead =0;
             this.revive();
         }
@@ -282,10 +281,13 @@ function Driller(column,row) {
 //adds a line of empty blocks at the bottom
 //used for initiating the screen
 function addEmptyBlocks(depth){
-    for(d=0; d<depth; d++){
-        for(x=0; x<numColumns;x++){
+    for(var d=0; d<window.depth; d++){
+        for(var x=0; x<window.numColumns;x++){
             // pushes a new item onto the beginning of the array
-            blocks[x].unshift(new Block("empty"));
+            window.blocks[x].unshift(new Block("empty"));
+        }
+        if(blocks[x].length>numRows){
+            blocks[x].pop();
         }
     }
     return blocks;
@@ -300,7 +302,7 @@ function addBottomBlocks(depth, airProbability, durableProbability){
         var x;
         for(x=0; x<numColumns;x++){
             // pushes a new item onto the beginning of the array
-            blocks[x].unshift(new Block(colors[Math.floor(Math.random()*colors.length)]));
+            window.blocks[x].unshift(new Block(colors[Math.floor(Math.random()*colors.length)]));
             if(Math.random()<airProbability){
                 blocks[x][0].type = "air";
             }else if(Math.random()<durableProbability){
@@ -355,14 +357,10 @@ function onKeyDown(event) {
 }
 
 function restartGame(){
-    blocks=[];
-    for(i=0;i<blockcolumns;i++){
-        blocks.push([]); // add second dimensional arrays to each index
-    }
-
+    window.blocks = [[],[],[],[],[],[],[]];
+    setUpWorld();
     window.score = 0;
     window.depth = 0;
-    setUpWorld();
     window.inGame = true;    
 }
 
