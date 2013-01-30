@@ -1,3 +1,8 @@
+// HTML5 Mr. Driller
+// Authors:
+//   Nathan Hamal <nhamal@andrew.cmu.edu>
+//   Dylan Mikus <dmikus@andrew.cmu.edu>
+
 // Global variables
 
 //colors used for blocks.
