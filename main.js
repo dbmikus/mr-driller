@@ -20,12 +20,20 @@ var leftarrow = 37;
 var rightarrow = 39;
 var spacebar = 32;
 var rKey     = 82;
-var inGame = true;
+var inGame = false;
+var introScreen = true;
 var worldWidth = 420;
 var score = 0;
 var driller;
 var canvas = document.getElementById("myCanvas");
 var ctx = canvas.getContext("2d");
+var infoScreen = new Image();
+infoScreen.src = "infoScreen.jpg";
+infoScreen.onload = function(){
+    drawIntroScreen();
+    }
+
+
 
 // A 2D array of blocks. Block at pos (0,0) is one below canvas display on
 // left side. This is like cartesian plane coordinates
@@ -36,7 +44,14 @@ for(i=0;i<numColumns;i++){
 
 // Sets up the world and draws objects on canvas
 function main() {
-    setUpWorld();  // does not handle drawings of objects
+    // adding listeners to control driller
+    // Focusing canvas so it can register events
+    canvas.setAttribute('tabindex','0');
+    canvas.focus();
+    canvas.addEventListener('keydown', onKeyDown, false);
+
+    intro();
+    //setUpWorld();  // does not handle drawings of objects
 
     // Creating timer to draw screen
     var timerDelay = 50;
@@ -44,17 +59,16 @@ function main() {
     var intervalId = setInterval(onTimer, timerDelay);
 }
 
+function intro(){
+    window.introScreen= true;
+}
+
+
 function setUpWorld() {
     addEmptyBlocks(2);  // add empty blocks at the bottom of the screen
     addBottomBlocks(5,0,0); // add blocks to bottom of screen, pushing them up
     fillEmpty();        // fill the rest of the grid with empty blocks
     driller = new Driller(3,5);
-
-    // adding listeners to control driller
-    // Focusing canvas so it can register events
-    canvas.setAttribute('tabindex','0');
-    canvas.focus();
-    canvas.addEventListener('keydown', onKeyDown, false);
 }
 
 function gameOver(){
@@ -73,15 +87,13 @@ function onTimer() {
             driller.deathTime();
         }
         blocks = animate(blocks);
+        // Check if Mr. Driller is in an air pocket
+        if (blocks[driller.column][driller.row].type==="air") {
+            blocks[driller.column][driller.row].type= "empty";
+            driller.airPocket();
+        }
+        blocks = animate(blocks);
     }
-
-    // Check if Mr. Driller is in an air pocket
-    if (blocks[driller.column][driller.row].type==="air") {
-        blocks[driller.column][driller.row].type= "empty";
-        driller.airPocket();
-    }
-
-    blocks = animate(blocks);
 }
 
 //checks all things that can fall to see if they should be falling,
@@ -354,9 +366,15 @@ function onKeyDown(event) {
     }
 
     // Drilling stuff
-    if (keycode === spacebar) {
+    if (keycode === spacebar && introScreen ===false) {
         driller.drill();
     }
+    if (keycode === spacebar && introScreen ===true) {
+        setUpWorld();
+        introScreen = false;
+        inGame= true;
+    }
+
 
     // Restart
     if (keycode === rKey
@@ -538,10 +556,17 @@ function drawWorld() {
 
 // This is the drawing function that happens every time
 function drawDisplay() {
+    if( window.introScreen){
+        drawIntroScreen();
+    }else{
     drawScoreboard(canvas.width - worldWidth, canvas.height);
     drawWorld();
+    }
 }
 
+function drawIntroScreen(){
+    ctx.drawImage(window.infoScreen, 0, 0, 600, 600, 0, 0, 600, 600);
+}
 
 // Just offshores (to China) the drawing of blocks and figuring out whether to
 // connect blocks visually
